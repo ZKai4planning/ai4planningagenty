@@ -71,7 +71,7 @@ export default function AgentY() {
                       }`}
                       disabled={cilApproved}
                     >
-                      {cilApproved ? "ATTACHED" : "AUTO_FIX_HIGH"}
+                      {cilApproved ? "ATTACHED" : "Generate CIL Form"}
                     </button>
                   </td>
                   <td
@@ -98,7 +98,7 @@ export default function AgentY() {
                   </td>
                   <td>
                     <button className="px-4 py-2 bg-gray-700 hover:bg-gray-800 text-white rounded-lg text-xs font-medium cursor-pointer">
-                      MAP
+                 Fetch Location Plan
                     </button>
                   </td>
                   <td className="text-gray-400">Unlocked</td>
