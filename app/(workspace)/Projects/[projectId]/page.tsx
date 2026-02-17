@@ -935,24 +935,30 @@ function EligibilityCheckDetails({
               <AlertCircle className="w-4 h-4 text-amber-600" />
               Remaining Missing Details
             </h3>
-            {missingItems.length > 0 ? (
-              <ul className="space-y-2">
-                {missingItems.map((item, idx) => (
-                  <li
-                    key={`${item.section}-${item.question}-${idx}`}
-                    className="flex flex-wrap items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900"
-                  >
-                    <span className="font-semibold">{item.section}:</span>
-                    <span>{item.question}</span>
-                    <span className="text-rose-700">
-                      {item.answer}
-                    </span>
-                  </li>
-                ))}
-              </ul>
+            {briefcaseCompleted ? (
+              missingItems.length > 0 ? (
+                <ul className="space-y-2">
+                  {missingItems.map((item, idx) => (
+                    <li
+                      key={`${item.section}-${item.question}-${idx}`}
+                      className="flex flex-wrap items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900"
+                    >
+                      <span className="font-semibold">{item.section}:</span>
+                      <span>{item.question}</span>
+                      <span className="text-rose-700">
+                        {item.answer}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700">
+                  All initiation details are complete.
+                </div>
+              )
             ) : (
-              <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700">
-                All initiation details are complete.
+              <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-500">
+                Run the briefcase to reveal missing details.
               </div>
             )}
           </div>
