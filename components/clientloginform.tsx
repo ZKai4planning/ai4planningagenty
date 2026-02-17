@@ -104,7 +104,7 @@ export function ClientLogin() {
     <div className="lg:col-span-5 p-8 lg:p-12 flex flex-col justify-center">
       <div className="mb-8">
         <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
-          Admin Sign In
+          Sign In
         </h2>
       </div>
 
