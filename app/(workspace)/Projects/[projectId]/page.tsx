@@ -38,11 +38,6 @@ const JOURNEY_STEPS: JourneyStep[] = [
     icon: FileSearch,
   },
   {
-    id: "agent-x-intake",
-    label: "Agent X Intake",
-    icon: FileText,
-  },
-  {
     id: "current-processing",
     label: "Current Processing",
     icon: Cpu,
@@ -113,6 +108,9 @@ type AnswerMap = Record<string, string>
 const ELIGIBILITY_STEP_ID = "initiation"
 const PROJECT_LAST_ID_KEY = "ai4planning_last_project_id"
 const MISSING_VALUE = "Missing"
+const NOTIFICATION_STORAGE_KEY =
+  "ai4planning_workspace_notification"
+const NOTIFICATION_EVENT = "ai4planning-notification"
 const MISSING_TOKENS = new Set([
   MISSING_VALUE,
   "Not provided",
@@ -123,6 +121,28 @@ const MISSING_TOKENS = new Set([
 const isMissingAnswer = (value: string) => {
   const trimmed = value.trim()
   return trimmed === "" || MISSING_TOKENS.has(trimmed)
+}
+
+const notifyAgentXRequiredDocs = (href: string) => {
+  if (typeof window === "undefined") return
+  const payload = {
+    id: `agentx-required-${Date.now()}`,
+    from: "Agent X",
+    message: "Required documents are ready for your review.",
+    timestamp: new Date().toISOString(),
+    unread: true,
+    href,
+    targetId: "agent-x-followup",
+  }
+  try {
+    localStorage.setItem(
+      NOTIFICATION_STORAGE_KEY,
+      JSON.stringify(payload)
+    )
+    window.dispatchEvent(new Event(NOTIFICATION_EVENT))
+  } catch {
+    // Ignore storage failures for static UI.
+  }
 }
 
 const AGENT_X_ANSWERS: AnswerMap = {
@@ -303,6 +323,11 @@ export default function ProjectDetailsPage() {
   >("idle")
   const [automationStep, setAutomationStep] = useState(0)
   const [activeJourneyStep, setActiveJourneyStep] = useState(0)
+  const [awaitingAgentX, setAwaitingAgentX] = useState(false)
+  const [showAgentXFollowUp, setShowAgentXFollowUp] =
+    useState(false)
+  const [showAgentXModal, setShowAgentXModal] =
+    useState(false)
 
   useEffect(() => {
     if (typeof window === "undefined") return
@@ -344,6 +369,26 @@ export default function ProjectDetailsPage() {
       // Ignore storage failures for static UI.
     }
   }, [project])
+
+  useEffect(() => {
+    if (!awaitingAgentX) {
+      setShowAgentXFollowUp(false)
+      setShowAgentXModal(false)
+      return
+    }
+    setShowAgentXFollowUp(false)
+    setShowAgentXModal(false)
+    const timer = window.setTimeout(() => {
+      setShowAgentXFollowUp(true)
+    }, 4000)
+    return () => window.clearTimeout(timer)
+  }, [awaitingAgentX])
+
+  useEffect(() => {
+    if (!showAgentXFollowUp || !project) return
+    const href = `/Projects/${encodeURIComponent(project.id)}`
+    notifyAgentXRequiredDocs(href)
+  }, [showAgentXFollowUp, project])
 
   const runAutomation = async () => {
     if (!project) return
@@ -411,7 +456,7 @@ export default function ProjectDetailsPage() {
       <div className="mt-8">
         <div className="grid grid-cols-12 gap-6">
           <div className="col-span-12">
-            <div className="rounded-2xl border bg-white p-6 shadow-sm max-w-5xl mx-auto">
+            <div className="rounded-2xl border bg-white p-6 shadow-sm">
               <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
                 <div>
                   <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">
@@ -435,7 +480,7 @@ export default function ProjectDetailsPage() {
               />
             </div>
 
-            <div className="max-w-4xl mx-auto">
+            <div>
               <EligibilityCheckDetails
                 project={project as EligibilityProject}
                 isActive={
@@ -444,26 +489,155 @@ export default function ProjectDetailsPage() {
                 }
                 onRunBriefcase={runAutomation}
                 onSubmitSuccess={() => {
-                  setActiveJourneyStep((prev) =>
-                    Math.min(prev + 1, JOURNEY_STEPS.length - 1)
-                  )
+                  setAwaitingAgentX(true)
                 }}
                 automationLoading={automationLoading}
                 automationStatus={automationStatus}
                 activeAutomationStep={automationStep}
               />
-              <AgentXIntakeDetails
-                project={project as EligibilityProject}
-                isActive={
-                  JOURNEY_STEPS[activeJourneyStep]?.id ===
-                  "agent-x-intake"
-                }
-                onProceed={() => {
-                  setActiveJourneyStep((prev) =>
-                    Math.min(prev + 1, JOURNEY_STEPS.length - 1)
-                  )
-                }}
-              />
+              {awaitingAgentX &&
+                JOURNEY_STEPS[activeJourneyStep]?.id ===
+                  ELIGIBILITY_STEP_ID && (
+                  <div className="mt-6 space-y-4">
+                    <div className="rounded-2xl border border-emerald-100 bg-emerald-50 p-6 text-sm text-emerald-800 shadow-sm">
+                      <h3 className="text-base font-semibold text-emerald-900">
+                        Awaiting Agent X Follow-up
+                      </h3>
+                      <p className="mt-1 text-xs text-emerald-700">
+                        You have submitted the required details
+                        to Agent X. A follow-up notification
+                        will appear shortly with required
+                        documents.
+                      </p>
+                    </div>
+
+                    {showAgentXFollowUp && (
+                      <div
+                        id="agent-x-followup"
+                        className="rounded-2xl border border-emerald-200 bg-white p-4 shadow-lg"
+                      >
+                        <div className="flex items-start justify-between gap-4">
+                          <div className="flex items-start gap-3">
+                            <div className="mt-0.5 flex h-9 w-9 items-center justify-center rounded-full bg-emerald-100 text-emerald-700">
+                              <AlertCircle className="h-4 w-4" />
+                            </div>
+                            <div>
+                              <h4 className="text-sm font-semibold text-slate-900">
+                                Agent X Follow-up: Required
+                                Documents
+                              </h4>
+                              <p className="mt-1 text-xs text-slate-500">
+                                A new document request is ready
+                                for your review.
+                              </p>
+                            </div>
+                          </div>
+                          <span className="rounded-full bg-emerald-50 px-3 py-1 text-[11px] font-semibold text-emerald-700">
+                            NEW
+                          </span>
+                        </div>
+
+                        <div className="mt-4 flex items-center justify-end">
+                          <button
+                            type="button"
+                            onClick={() => setShowAgentXModal(true)}
+                            className="rounded-full bg-emerald-600 px-4 py-2 text-xs font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-emerald-700 hover:shadow-md active:translate-y-0"
+                          >
+                            Review Requirements
+                          </button>
+                        </div>
+                      </div>
+                    )}
+
+                    {showAgentXModal && (
+                      <div className="fixed inset-0 z-50 flex items-center justify-center">
+                        <div
+                          className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"
+                          onClick={() => setShowAgentXModal(false)}
+                        />
+                        <div className="relative mx-4 w-full max-w-md rounded-2xl border border-slate-200 bg-white p-6 shadow-2xl">
+                          <button
+                            className="absolute right-4 top-4 text-slate-400 hover:text-slate-600"
+                            onClick={() => setShowAgentXModal(false)}
+                          >
+                            ×
+                          </button>
+                          <div className="flex items-start gap-3">
+                            <div className="mt-0.5 flex h-10 w-10 items-center justify-center rounded-full bg-emerald-100 text-emerald-700">
+                              <AlertCircle className="h-5 w-5" />
+                            </div>
+                            <div>
+                              <h3 className="text-base font-semibold text-slate-900">
+                                Required Documents
+                              </h3>
+                              <p className="mt-1 text-xs text-slate-500">
+                                Agent X requires the following
+                                items before moving forward.
+                              </p>
+                            </div>
+                          </div>
+
+                          <ul className="mt-4 space-y-2 text-sm text-slate-700">
+                            {project?.documents
+                              ?.slice(0, 3)
+                              .map((doc) => (
+                                <li
+                                  key={doc}
+                                  className="flex items-center gap-2 rounded-lg border border-emerald-100 bg-emerald-50/40 px-3 py-2"
+                                >
+                                  <CheckCircle className="h-4 w-4 text-emerald-600" />
+                                  <span>{doc}</span>
+                                </li>
+                              ))}
+                            {!project?.documents?.length && (
+                              <>
+                                <li className="flex items-center gap-2 rounded-lg border border-emerald-100 bg-emerald-50/40 px-3 py-2">
+                                  <CheckCircle className="h-4 w-4 text-emerald-600" />
+                                  <span>Site Location Plan</span>
+                                </li>
+                                <li className="flex items-center gap-2 rounded-lg border border-emerald-100 bg-emerald-50/40 px-3 py-2">
+                                  <CheckCircle className="h-4 w-4 text-emerald-600" />
+                                  <span>Block Plan</span>
+                                </li>
+                                <li className="flex items-center gap-2 rounded-lg border border-emerald-100 bg-emerald-50/40 px-3 py-2">
+                                  <CheckCircle className="h-4 w-4 text-emerald-600" />
+                                  <span>CIL Form</span>
+                                </li>
+                              </>
+                            )}
+                          </ul>
+
+                          <div className="mt-5 flex items-center justify-end gap-3">
+                            <button
+                              type="button"
+                              onClick={() => setShowAgentXModal(false)}
+                              className="text-xs font-semibold text-slate-500 hover:text-slate-700"
+                            >
+                              Back
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setAwaitingAgentX(false)
+                                setShowAgentXFollowUp(false)
+                                setShowAgentXModal(false)
+                                setActiveJourneyStep((prev) =>
+                                  Math.min(
+                                    prev + 1,
+                                    JOURNEY_STEPS.length - 1
+                                  )
+                                )
+                              }}
+                              className="rounded-full bg-emerald-600 px-4 py-2 text-xs font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-emerald-700 hover:shadow-md active:translate-y-0"
+                            >
+                              Proceed to Current Processing
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
               <CurrentProcessingDetails
                 isActive={
                   JOURNEY_STEPS[activeJourneyStep]?.id ===
@@ -586,6 +760,36 @@ function EligibilityCheckDetails({
     {
       section: "Documents",
       question: "Location Plan",
+      answer: MISSING_VALUE,
+    },
+    {
+      section: "Documents",
+      question: "Missing site plan",
+      answer: MISSING_VALUE,
+    },
+    {
+      section: "Documents",
+      question: "Wrong or incomplete application form",
+      answer: MISSING_VALUE,
+    },
+    {
+      section: "Documents",
+      question: "Incorrect ownership certificate",
+      answer: MISSING_VALUE,
+    },
+    {
+      section: "Documents",
+      question: "Missing or incorrect fee",
+      answer: MISSING_VALUE,
+    },
+    {
+      section: "Documents",
+      question: "No heritage assessment",
+      answer: MISSING_VALUE,
+    },
+    {
+      section: "Documents",
+      question: "Missing biodiversity report",
       answer: MISSING_VALUE,
     },
   ]
@@ -968,119 +1172,6 @@ function EligibilityCheckDetails({
               Missing details submitted to Agent X (mock).
             </div>
           )}
-        </div>
-      </div>
-    </div>
-  )
-}
-
-function AgentXIntakeDetails({
-  project,
-  isActive,
-  onProceed,
-}: {
-  project: EligibilityProject
-  isActive: boolean
-  onProceed?: () => void
-}) {
-  if (!isActive) {
-    return null
-  }
-
-  const sections = buildEligibilitySections(project)
-  const missingItems = [
-    ...sections.flatMap((section) =>
-      section.items
-        .filter((item) => isMissingAnswer(item.answer))
-        .map((item) => ({
-          section: section.title,
-          question: item.question,
-          answer: item.answer,
-        }))
-    ),
-    {
-      section: "Documents",
-      question: "CIL Form",
-      answer: MISSING_VALUE,
-    },
-    {
-      section: "Documents",
-      question: "Location Plan",
-      answer: MISSING_VALUE,
-    },
-  ]
-  const agentXSections = sections.map((section) => ({
-    ...section,
-    items: section.items.map((item) => {
-      if (!isMissingAnswer(item.answer)) {
-        return item
-      }
-      return {
-        ...item,
-        answer: AGENT_X_ANSWERS[item.question] ?? "Provided by Agent X",
-      }
-    }),
-  }))
-
-  return (
-    <div className="mt-6">
-      <div className="rounded-2xl border border-slate-200 bg-white shadow-sm">
-        <div className="flex flex-col gap-2 border-b border-slate-200 px-6 py-4 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <h3 className="text-lg font-semibold text-slate-900">
-              Agent X Intake
-            </h3>
-            <p className="text-xs text-slate-500">
-              Remaining missing details carried from initiation.
-            </p>
-          </div>
-          <span className="inline-flex rounded-full bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-700">
-            {missingItems.length} missing
-          </span>
-        </div>
-
-        <div className="p-6">
-          <div className="space-y-6">
-            {agentXSections.map((section) => (
-              <div key={section.title}>
-                <h4 className="text-sm font-semibold text-slate-900">
-                  {section.title}
-                </h4>
-                <div className="mt-3 grid gap-3 rounded-xl border border-slate-100 bg-slate-50 p-4">
-                  {section.items.map((item) => {
-                    const missing = isMissingAnswer(item.answer)
-                    return (
-                      <div
-                        key={`${section.title}-${item.question}`}
-                        className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between"
-                      >
-                        <span className="text-xs font-semibold text-slate-500">
-                          {item.question}
-                        </span>
-                        <span
-                          className={`text-sm font-medium ${
-                            missing ? "text-rose-600" : "text-slate-900"
-                          }`}
-                        >
-                          {item.answer}
-                        </span>
-                      </div>
-                    )
-                  })}
-                </div>
-              </div>
-            ))}
-          </div>
-
-          <div className="mt-6 flex items-center justify-end">
-            <button
-              type="button"
-              onClick={onProceed}
-              className="rounded-full bg-emerald-600 px-4 py-2 text-xs font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-emerald-700 hover:shadow-md active:translate-y-0"
-            >
-              Proceed to Current Processing
-            </button>
-          </div>
         </div>
       </div>
     </div>

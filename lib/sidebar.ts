@@ -9,6 +9,7 @@ import {
   FiClock,
   FiGrid,
   FiBarChart2,
+  FiBell,
 } from "react-icons/fi"
 import type { IconType } from "react-icons"
  
@@ -38,6 +39,12 @@ export const SIDEBAR_ITEMS: SidebarItem[] = [
     label: "Projects",
     icon: FiLayers,
     href: "/Projects",
+  },
+  {
+    id: "notifications",
+    label: "Notifications",
+    icon: FiBell,
+    href: "/Notifications",
   },
   {
     id: "users",

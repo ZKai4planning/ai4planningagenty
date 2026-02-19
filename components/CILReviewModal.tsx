@@ -1,5 +1,6 @@
 "use client"
 
+import { useEffect, useState } from "react"
 import { X } from "lucide-react"
 
 interface Props {
@@ -8,12 +9,35 @@ interface Props {
   onApprove: () => void
 }
 
+const TOTAL_FILL_STEPS = 5
+
 export default function CILReviewModal({
   open,
   onClose,
   onApprove,
 }: Props) {
+  const [fillStep, setFillStep] = useState(0)
+
+  useEffect(() => {
+    if (!open) {
+      setFillStep(0)
+      return
+    }
+    let step = 0
+    setFillStep(0)
+    const interval = window.setInterval(() => {
+      step += 1
+      setFillStep(step)
+      if (step >= TOTAL_FILL_STEPS) {
+        window.clearInterval(interval)
+      }
+    }, 1200)
+    return () => window.clearInterval(interval)
+  }, [open])
+
   if (!open) return null
+
+  const isFilled = (step: number) => fillStep >= step
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
@@ -32,8 +56,7 @@ export default function CILReviewModal({
         </div>
 
         {/* Split Layout */}
-        <div className="flex flex-1 overflow-hidden">
-
+        <div className="relative flex flex-1 overflow-hidden">
           {/* LEFT SIDE - PDF Preview */}
           <div className="w-7/12 bg-gray-100 p-8 overflow-y-auto">
             <div className="bg-white shadow-lg mx-auto w-full max-w-2xl p-10 border">
@@ -44,27 +67,92 @@ export default function CILReviewModal({
 
               <div className="space-y-4 text-sm">
 
-                <div className="bg-blue-50 border border-blue-200 p-3 rounded">
-                  Ref: PL/2023/0842/CIL
+                <div className="relative bg-blue-50 border border-blue-200 p-3 rounded overflow-hidden">
+                  <div
+                    className={`absolute inset-0 bg-slate-200/70 animate-pulse transition-opacity ${
+                      isFilled(1) ? "opacity-0" : "opacity-100"
+                    }`}
+                  />
+                  <div
+                    className={`relative transition-all duration-500 ${
+                      isFilled(1)
+                        ? "opacity-100 translate-y-0"
+                        : "opacity-0 translate-y-1"
+                    }`}
+                  >
+                    Ref: PL/2023/0842/CIL
+                  </div>
                 </div>
 
-                <div className="bg-blue-50 border border-blue-200 p-3 rounded">
-                  14-18 Kensington High Street, London, W8 4EE
+                <div className="relative bg-blue-50 border border-blue-200 p-3 rounded overflow-hidden">
+                  <div
+                    className={`absolute inset-0 bg-slate-200/70 animate-pulse transition-opacity ${
+                      isFilled(2) ? "opacity-0" : "opacity-100"
+                    }`}
+                  />
+                  <div
+                    className={`relative transition-all duration-500 ${
+                      isFilled(2)
+                        ? "opacity-100 translate-y-0"
+                        : "opacity-0 translate-y-1"
+                    }`}
+                  >
+                    14-18 Kensington High Street, London, W8 4EE
+                  </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
-                  <div className="bg-blue-50 border border-blue-200 p-3 rounded">
-                    450.00 sqm
+                  <div className="relative bg-blue-50 border border-blue-200 p-3 rounded overflow-hidden">
+                    <div
+                      className={`absolute inset-0 bg-slate-200/70 animate-pulse transition-opacity ${
+                        isFilled(3) ? "opacity-0" : "opacity-100"
+                      }`}
+                    />
+                    <div
+                      className={`relative transition-all duration-500 ${
+                        isFilled(3)
+                          ? "opacity-100 translate-y-0"
+                          : "opacity-0 translate-y-1"
+                      }`}
+                    >
+                      450.00 sqm
+                    </div>
                   </div>
 
-                  <div className="bg-blue-50 border border-blue-200 p-3 rounded">
-                    1,240.50 sqm
+                  <div className="relative bg-blue-50 border border-blue-200 p-3 rounded overflow-hidden">
+                    <div
+                      className={`absolute inset-0 bg-slate-200/70 animate-pulse transition-opacity ${
+                        isFilled(4) ? "opacity-0" : "opacity-100"
+                      }`}
+                    />
+                    <div
+                      className={`relative transition-all duration-500 ${
+                        isFilled(4)
+                          ? "opacity-100 translate-y-0"
+                          : "opacity-0 translate-y-1"
+                      }`}
+                    >
+                      1,240.50 sqm
+                    </div>
                   </div>
                 </div>
 
-                <div className="bg-blue-600 text-white p-6 rounded-lg">
-                  <p className="text-xs opacity-70">Total Levy Amount</p>
-                  <p className="text-3xl font-bold">£214,845.00</p>
+                <div className="relative bg-blue-600 text-white p-6 rounded-lg overflow-hidden">
+                  <div
+                    className={`absolute inset-0 bg-slate-200/30 animate-pulse transition-opacity ${
+                      isFilled(5) ? "opacity-0" : "opacity-100"
+                    }`}
+                  />
+                  <div
+                    className={`relative transition-all duration-500 ${
+                      isFilled(5)
+                        ? "opacity-100 translate-y-0"
+                        : "opacity-0 translate-y-1"
+                    }`}
+                  >
+                    <p className="text-xs opacity-70">Total Levy Amount</p>
+                    <p className="text-3xl font-bold">£214,845.00</p>
+                  </div>
                 </div>
 
               </div>
@@ -130,3 +218,4 @@ export default function CILReviewModal({
     </div>
   )
 }
+

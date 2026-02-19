@@ -1,12 +1,14 @@
 "use client"
 
-import { CheckCircle, Lock, ArrowRight } from "lucide-react"
+import { CheckCircle, Lock } from "lucide-react"
 import { useState } from "react"
 import CILReviewModal from "./CILReviewModal"
 
 export default function AgentY() {
   const [openCLI, SetOpenCLI] = useState(false)
   const [cilApproved, setCilApproved] = useState(false)
+  const [documentsSubmitted, setDocumentsSubmitted] =
+    useState(false)
   return (
     <div className="min-h-screen bg-gray-100 p-6">
       <div className="grid grid-cols-12 gap-6">
@@ -55,7 +57,7 @@ export default function AgentY() {
                       </span>
                     ) : (
                       <span className="px-3 py-1 rounded bg-yellow-100 text-yellow-600 text-xs">
-                        PENDING FIX
+                        MISSING CII FORM
                       </span>
                     )}
                   </td>
@@ -93,7 +95,7 @@ export default function AgentY() {
                   </td>
                   <td>
                     <span className="px-3 py-1 rounded bg-green-100 text-green-600 text-xs">
-                      AUTO-FIX READY
+                      MISSING LOCATION PLAN
                     </span>
                   </td>
                   <td>
@@ -114,7 +116,7 @@ export default function AgentY() {
                   </td>
                   <td>
                     <span className="px-3 py-1 rounded bg-orange-100 text-orange-600 text-xs">
-                      AWAITING AGENT X
+                      AWAITING AGENT X DATA
                     </span>
                   </td>
                   <td className="flex items-center gap-2 text-gray-400 text-xs">
@@ -134,7 +136,7 @@ export default function AgentY() {
                   </td>
                   <td>
                     <span className="px-3 py-1 rounded bg-green-100 text-green-600 text-xs">
-                      READY
+                      METADATA TAGGING READY
                     </span>
                   </td>
                   <td>
@@ -153,55 +155,38 @@ export default function AgentY() {
             </p>
           </div>
 
-          {/* Bottom Cards */}
-          <div className="grid grid-cols-2 gap-6">
-
-            {/* Automation Throughput */}
-            <div className="bg-white rounded-2xl shadow p-6">
-              <div className="flex justify-between mb-4">
-                <h3 className="text-sm font-semibold">
-                  AUTOMATION THROUGHPUT
-                </h3>
-                <span className="text-green-500 text-xs font-medium">
-                  LIVE VIEW
-                </span>
-              </div>
-
-              <div className="flex items-end gap-6 h-20">
-                <div className="w-10 bg-green-200 rounded h-10"></div>
-                <div className="w-10 bg-green-300 rounded h-14"></div>
-                <div className="w-10 bg-green-400 rounded h-16"></div>
-                <div className="w-10 bg-green-500 rounded h-20"></div>
-                <div className="w-10 bg-green-300 rounded h-14"></div>
-              </div>
-
-              <p className="text-xs text-gray-400 mt-3">
-                Resolution packets generated (Auto-Fix)
-              </p>
-            </div>
-
-            {/* Agent Connectivity */}
-            <div className="bg-white rounded-2xl shadow p-6 flex flex-col items-center justify-center">
-              <h3 className="text-sm font-semibold mb-4">
-                AGENT CONNECTIVITY
-              </h3>
-
-              <div className="w-32 h-32 border-4 border-green-300 rounded-full flex items-center justify-center">
-                <span className="text-green-500 font-semibold text-sm">
-                  Link: X & Y
-                </span>
-              </div>
-
-              <p className="text-xs text-gray-400 mt-4">
-                Protocol: HTTPS/2 Synchronized
-              </p>
-            </div>
-
-          </div>
+          {/* Bottom Cards removed per requirement */}
         </div>
 
         {/* ================= RIGHT PANEL ================= */}
         <div className="col-span-4 space-y-6">
+          {/* Submit Documents */}
+          <div className="bg-white rounded-2xl shadow p-6">
+            <h3 className="text-sm font-semibold">
+              Document Submission
+            </h3>
+            <p className="text-xs text-gray-400 mt-1">
+              {documentsSubmitted
+                ? "Documents submitted to Agent X."
+                : "Send all validated documents to Agent X."}
+            </p>
+            <button
+              className={`mt-4 w-full rounded-lg px-4 py-2 text-xs font-semibold text-white ${
+                documentsSubmitted
+                  ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                  : "bg-blue-600 hover:bg-blue-700"
+              }`}
+              onClick={() => setDocumentsSubmitted(true)}
+              disabled={documentsSubmitted}
+            >
+              {documentsSubmitted ? "Submitted" : "Submit Documents"}
+            </button>
+            {documentsSubmitted && (
+              <span className="mt-3 inline-flex items-center rounded-full bg-emerald-50 px-3 py-1 text-[11px] font-semibold text-emerald-700">
+                Submitted
+              </span>
+            )}
+          </div>
 
           {/* Dependency Panel */}
           <div className="bg-white rounded-2xl shadow p-6 space-y-4">
@@ -238,20 +223,7 @@ export default function AgentY() {
             </div>
           </div>
 
-          {/* Interlinked Journey */}
-          <div className="bg-gradient-to-r from-gray-900 to-gray-800 text-white rounded-2xl p-6">
-            <h3 className="text-lg font-semibold mb-3">
-              Interlinked Journey
-            </h3>
-
-            <p className="text-sm text-gray-300 mb-4">
-              Agent Y is part of a collaborative mesh.
-            </p>
-
-            <button className="w-full py-2 bg-white text-black rounded-lg flex items-center justify-center gap-2 text-sm font-medium">
-              REQUEST PEER VIEW <ArrowRight size={16} />
-            </button>
-          </div>
+          {/* Interlinked Journey removed per requirement */}
 
         </div>
       </div>
