@@ -102,6 +102,49 @@ import { usePathname } from "next/navigation"
 import { useAuthStore } from "../../lib/zustand"
 import { PROJECTS_STORAGE_KEY } from "../../lib/projects-data"
 import { USERS_STORAGE_KEY } from "../../lib/agent-users"
+import axiosInstance from "../../lib/axiosinstance"
+
+type EmployeeIdentity = {
+  name: string | null
+  email: string | null
+}
+
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === "object" && value !== null
+
+const extractIdentity = (payload: unknown): EmployeeIdentity => {
+  const candidates: unknown[] = []
+  if (isRecord(payload)) {
+    candidates.push(payload)
+    candidates.push(payload.data)
+    candidates.push(payload.profile)
+    if (isRecord(payload.data)) {
+      candidates.push(payload.data.data)
+      candidates.push(payload.data.profile)
+    }
+  }
+
+  for (const candidate of candidates) {
+    if (!isRecord(candidate)) continue
+    const name =
+      typeof candidate.name === "string"
+        ? candidate.name.trim()
+        : ""
+    const email =
+      typeof candidate.email === "string"
+        ? candidate.email.trim()
+        : ""
+
+    if (name || email) {
+      return {
+        name: name || null,
+        email: email || null,
+      }
+    }
+  }
+
+  return { name: null, email: null }
+}
 
 export default function DashboardLayout({
   children,
@@ -113,7 +156,13 @@ export default function DashboardLayout({
   const [collapsed, setCollapsed] = useState(false)
   const [showGetStarted, setShowGetStarted] = useState(false)
   const [dataCleared, setDataCleared] = useState(false)
+  const [employeeIdentity, setEmployeeIdentity] =
+    useState<EmployeeIdentity>({
+      name: null,
+      email: null,
+    })
   const pathname = usePathname()
+  const userId = useAuthStore((state) => state.userId)
   const userName = useAuthStore((state) => state.userName)
   const userRegion = useAuthStore((state) => state.region)
 
@@ -132,6 +181,34 @@ export default function DashboardLayout({
       setDataCleared(true)
     }
   }, [])
+
+  useEffect(() => {
+    if (!userId) {
+      setEmployeeIdentity({ name: null, email: null })
+      return
+    }
+
+    let active = true
+
+    const loadEmployeeIdentity = async () => {
+      try {
+        const response = await axiosInstance.get(
+          `/employee/profile/${userId}`
+        )
+        if (!active) return
+        setEmployeeIdentity(extractIdentity(response.data))
+      } catch {
+        if (!active) return
+        setEmployeeIdentity({ name: null, email: null })
+      }
+    }
+
+    void loadEmployeeIdentity()
+
+    return () => {
+      active = false
+    }
+  }, [userId])
 
   const breadcrumbs = useMemo(() => {
     const segments = pathname.split("/").filter(Boolean)
@@ -155,6 +232,9 @@ export default function DashboardLayout({
   }, [pathname])
 
   const toggleSidebar = () => setCollapsed((prev) => !prev)
+  const resolvedUserName =
+    employeeIdentity.name || userName || employeeIdentity.email || "Employee"
+  const resolvedUserEmail = employeeIdentity.email
 
   if (!dataCleared) {
     return null
@@ -170,6 +250,8 @@ export default function DashboardLayout({
         onToggle={toggleSidebar}
         onGetStarted={() => setShowGetStarted(true)}
         isOverlay={!isLaptopUp}
+        userDisplayName={resolvedUserName}
+        userDisplayEmail={resolvedUserEmail}
       />
 
       {/* Overlay (mobile/tablet) */}
@@ -184,7 +266,8 @@ export default function DashboardLayout({
       <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
         <DashboardHeader
           breadcrumbs={breadcrumbs}
-          userName={userName || "Admin"}
+          userName={resolvedUserName}
+          userEmail={resolvedUserEmail}
           userRegion={userRegion}
           collapsed={collapsed}
           onToggle={toggleSidebar}

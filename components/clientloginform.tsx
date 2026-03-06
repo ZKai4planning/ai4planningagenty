@@ -337,6 +337,7 @@ export function ClientLogin() {
 
   const setToken = useAuthStore((state) => state.setToken);
   const setUserId = useAuthStore((state) => state.setUserId);
+  const setUser = useAuthStore((state) => state.setUser);
   const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setEmail(e.target.value);
     resetErrorState();
@@ -368,7 +369,7 @@ const resetErrorState = () => {
       resetErrorState();
 
       try {
-        await axiosInstance.post("/admin/auth/login", {
+        await axiosInstance.post("/employee/auth/login", {
           email,
           password,
           region: "in",
@@ -425,7 +426,7 @@ const resetErrorState = () => {
 
       let res: any;
       try {
-        res = await axiosInstance.post("/admin/auth/verify-otp", {
+        res = await axiosInstance.post("/employee/auth/verify-otp", {
           email,
           otp: otpCode,
         });
@@ -467,6 +468,10 @@ const resetErrorState = () => {
           setUserId(String(rawUserId));
         }
 
+        setUser({
+          userName: email.trim(),
+          role: "employee",
+        });
         setToken(token);
         router.push("/Dashboard");
         return;
@@ -485,7 +490,7 @@ const handleResendOtp = async () => {
   setSuccessMessage(null);
 
   try {
-    await axiosInstance.post("/admin/auth/resend-otp", { email });
+    await axiosInstance.post("/employee/auth/resend-otp", { email });
 
     // ✅ SUCCESS MESSAGE
     setSuccessMessage("OTP sent successfully");
@@ -504,7 +509,7 @@ const handleResendOtp = async () => {
       {/* Header */}
       <div className="mb-8">
         <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
-          Admin Sign In
+         Sign In  
         </h2>
       </div>
 

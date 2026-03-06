@@ -12,6 +12,7 @@ type Breadcrumb = {
 interface DashboardHeaderProps {
   breadcrumbs: Breadcrumb[]
   userName: string
+  userEmail?: string | null
   userRegion?: string | null
   collapsed: boolean
   onToggle: () => void
@@ -20,11 +21,20 @@ interface DashboardHeaderProps {
 export function DashboardHeader({
   breadcrumbs,
   userName,
+  userEmail,
   userRegion,
   collapsed,
   onToggle,
 }: DashboardHeaderProps) {
   const userLabel = userRegion ? `${userName} (${userRegion})` : userName
+  const profileLabel = userEmail || "Open profile"
+  const initials =
+    userName
+      .trim()
+      .split(/\s+/)
+      .map((segment) => segment[0]?.toUpperCase() ?? "")
+      .join("")
+      .slice(0, 2) || "EM"
   const greeting = useMemo(() => {
     const hour = new Date().getHours()
     if (hour < 12) return "Good morning"
@@ -78,11 +88,30 @@ export function DashboardHeader({
       </div>
  
       {/* ================= RIGHT ================= */}
-      <div className="hidden sm:flex flex-col items-end">
-        <p className="text-sm text-slate-700 dark:text-slate-200 font-medium">
-          {greeting}, {userLabel}
-        </p>
-        <p className="text-xs text-slate-500 dark:text-slate-400">{wish}</p>
+      <div className="flex items-center gap-4">
+        <div className="hidden sm:flex flex-col items-end">
+          <p className="text-sm text-slate-700 dark:text-slate-200 font-medium">
+            {greeting}, {userLabel}
+          </p>
+          <p className="text-xs text-slate-500 dark:text-slate-400">{wish}</p>
+        </div>
+
+        <Link
+          href="/Profile"
+          className="flex items-center gap-3 rounded-full border border-slate-200 bg-white px-3 py-1.5 transition hover:border-blue-300 hover:bg-blue-50"
+        >
+          <span className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-100 text-xs font-semibold text-blue-700">
+            {initials}
+          </span>
+          <span className="min-w-0">
+            <span className="block max-w-[180px] truncate text-xs font-semibold text-slate-700">
+              {userName}
+            </span>
+            <span className="block max-w-[180px] truncate text-[11px] text-slate-500">
+              {profileLabel}
+            </span>
+          </span>
+        </Link>
       </div>
     </header>
   )

@@ -1,7 +1,6 @@
 import {
   FiHome,
   FiUser,
-  FiSettings,
   FiLogOut,
   FiLayers,
   FiFileText,
