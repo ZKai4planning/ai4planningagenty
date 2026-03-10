@@ -161,9 +161,7 @@ export default function DashboardPage() {
               Overall system health, workload distribution, and
               delivery progress across all projects.
             </p>
-            <p className="mt-2 text-xs font-semibold text-slate-500">
-              User ID: <span className="text-slate-700">{userId ?? "Not available"}</span>
-            </p>
+           
           </div>
           <div className="flex flex-wrap gap-2">
             <Link

@@ -280,10 +280,7 @@ export default function ProfilePage() {
         <p className="mt-3 text-sm text-slate-500">
           Update your name, email, phone number, and profile picture.
         </p>
-        <p className="mt-2 text-xs font-semibold text-slate-500">
-          User ID:{" "}
-          <span className="text-slate-700">{userId ?? "Not available"}</span>
-        </p>
+       
       </section>
 
       <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
