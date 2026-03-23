@@ -104,15 +104,21 @@ import { PROJECTS_STORAGE_KEY } from "../../lib/projects-data"
 import { USERS_STORAGE_KEY } from "../../lib/agent-users"
 import axiosInstance from "../../lib/axiosinstance"
 
-type EmployeeIdentity = {
+type EmployeeProfileSummary = {
   name: string | null
   email: string | null
+  profilePicture: string | null
+  completionPercentage: number | null
+  completedFields: number | null
+  totalFields: number | null
 }
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === "object" && value !== null
 
-const extractIdentity = (payload: unknown): EmployeeIdentity => {
+const extractProfileSummary = (
+  payload: unknown
+): Pick<EmployeeProfileSummary, "name" | "email" | "profilePicture"> => {
   const candidates: unknown[] = []
   if (isRecord(payload)) {
     candidates.push(payload)
@@ -134,16 +140,74 @@ const extractIdentity = (payload: unknown): EmployeeIdentity => {
       typeof candidate.email === "string"
         ? candidate.email.trim()
         : ""
+    const profilePicture =
+      typeof candidate.profilePicture === "string"
+        ? candidate.profilePicture.trim()
+        : ""
 
-    if (name || email) {
+    if (name || email || profilePicture) {
       return {
         name: name || null,
         email: email || null,
+        profilePicture: profilePicture || null,
       }
     }
   }
 
-  return { name: null, email: null }
+  return { name: null, email: null, profilePicture: null }
+}
+
+const extractCompletionSummary = (
+  payload: unknown
+): Pick<
+  EmployeeProfileSummary,
+  "completionPercentage" | "completedFields" | "totalFields"
+> => {
+  const candidates: unknown[] = []
+  if (isRecord(payload)) {
+    candidates.push(payload)
+    candidates.push(payload.data)
+    candidates.push(payload.status)
+    if (isRecord(payload.data)) {
+      candidates.push(payload.data.data)
+      candidates.push(payload.data.status)
+    }
+  }
+
+  for (const candidate of candidates) {
+    if (!isRecord(candidate)) continue
+
+    const completionPercentage =
+      typeof candidate.completionPercentage === "number"
+        ? candidate.completionPercentage
+        : null
+    const completedFields =
+      typeof candidate.completedFields === "number"
+        ? candidate.completedFields
+        : null
+    const totalFields =
+      typeof candidate.totalFields === "number"
+        ? candidate.totalFields
+        : null
+
+    if (
+      completionPercentage !== null ||
+      completedFields !== null ||
+      totalFields !== null
+    ) {
+      return {
+        completionPercentage,
+        completedFields,
+        totalFields,
+      }
+    }
+  }
+
+  return {
+    completionPercentage: null,
+    completedFields: null,
+    totalFields: null,
+  }
 }
 
 export default function DashboardLayout({
@@ -156,10 +220,14 @@ export default function DashboardLayout({
   const [collapsed, setCollapsed] = useState(false)
   const [showGetStarted, setShowGetStarted] = useState(false)
   const [dataCleared, setDataCleared] = useState(false)
-  const [employeeIdentity, setEmployeeIdentity] =
-    useState<EmployeeIdentity>({
+  const [employeeProfile, setEmployeeProfile] =
+    useState<EmployeeProfileSummary>({
       name: null,
       email: null,
+      profilePicture: null,
+      completionPercentage: null,
+      completedFields: null,
+      totalFields: null,
     })
   const pathname = usePathname()
   const userId = useAuthStore((state) => state.userId)
@@ -184,26 +252,62 @@ export default function DashboardLayout({
 
   useEffect(() => {
     if (!userId) {
-      setEmployeeIdentity({ name: null, email: null })
+      setEmployeeProfile({
+        name: null,
+        email: null,
+        profilePicture: null,
+        completionPercentage: null,
+        completedFields: null,
+        totalFields: null,
+      })
       return
     }
 
     let active = true
 
-    const loadEmployeeIdentity = async () => {
+    const loadEmployeeProfile = async () => {
       try {
-        const response = await axiosInstance.get(
-          `/employee/profile/${userId}`
-        )
+        const [profileResult, statusResult] = await Promise.allSettled([
+          axiosInstance.get(`/employee/profile/${userId}`),
+          axiosInstance.get(`/employee/profile/${userId}/status`),
+        ])
+
         if (!active) return
-        setEmployeeIdentity(extractIdentity(response.data))
+
+        setEmployeeProfile({
+          ...(
+            profileResult.status === "fulfilled"
+              ? extractProfileSummary(profileResult.value.data)
+              : {
+                  name: null,
+                  email: null,
+                  profilePicture: null,
+                }
+          ),
+          ...(
+            statusResult.status === "fulfilled"
+              ? extractCompletionSummary(statusResult.value.data)
+              : {
+                  completionPercentage: null,
+                  completedFields: null,
+                  totalFields: null,
+                }
+          ),
+        })
       } catch {
         if (!active) return
-        setEmployeeIdentity({ name: null, email: null })
+        setEmployeeProfile({
+          name: null,
+          email: null,
+          profilePicture: null,
+          completionPercentage: null,
+          completedFields: null,
+          totalFields: null,
+        })
       }
     }
 
-    void loadEmployeeIdentity()
+    void loadEmployeeProfile()
 
     return () => {
       active = false
@@ -233,8 +337,8 @@ export default function DashboardLayout({
 
   const toggleSidebar = () => setCollapsed((prev) => !prev)
   const resolvedUserName =
-    employeeIdentity.name || userName || employeeIdentity.email || "Employee"
-  const resolvedUserEmail = employeeIdentity.email
+    employeeProfile.name || userName || employeeProfile.email || "Employee"
+  const resolvedUserEmail = employeeProfile.email
 
   if (!dataCleared) {
     return null
@@ -269,6 +373,10 @@ export default function DashboardLayout({
           userName={resolvedUserName}
           userEmail={resolvedUserEmail}
           userRegion={userRegion}
+          userAvatarUrl={employeeProfile.profilePicture}
+          profileCompletionPercentage={employeeProfile.completionPercentage}
+          completedFields={employeeProfile.completedFields}
+          totalFields={employeeProfile.totalFields}
           collapsed={collapsed}
           onToggle={toggleSidebar}
         />

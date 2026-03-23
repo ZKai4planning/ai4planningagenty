@@ -23,10 +23,21 @@ type ProfileFormValues = {
   phoneNumber: string
 }
 
+const PHONE_PREFIX = "+91 "
+
+const getPhoneDigits = (value: string): string => {
+  const digitsOnly = value.replace(/\D/g, "")
+  return digitsOnly.startsWith("91") ? digitsOnly.slice(2) : digitsOnly
+}
+
+const normalizePhoneNumber = (value: string): string => {
+  return `${PHONE_PREFIX}${getPhoneDigits(value)}`
+}
+
 const EMPTY_FORM: ProfileFormValues = {
   name: "",
   email: "",
-  phoneNumber: "",
+  phoneNumber: PHONE_PREFIX,
 }
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
@@ -135,7 +146,7 @@ export default function ProfilePage() {
       setFormValues({
         name: profile.name ?? "",
         email: profile.email ?? "",
-        phoneNumber: profile.phoneNumber ?? "",
+        phoneNumber: normalizePhoneNumber(profile.phoneNumber ?? ""),
       })
       setProfilePicture(profile.profilePicture ?? null)
     } catch (error: unknown) {
@@ -155,7 +166,11 @@ export default function ProfilePage() {
     field: keyof ProfileFormValues,
     value: string
   ) => {
-    setFormValues((prev) => ({ ...prev, [field]: value }))
+    setFormValues((prev) => ({
+      ...prev,
+      [field]:
+        field === "phoneNumber" ? normalizePhoneNumber(value) : value,
+    }))
     if (saveMessage) setSaveMessage(null)
     if (saveError) setSaveError(null)
   }
@@ -168,6 +183,11 @@ export default function ProfilePage() {
       return
     }
 
+    if (!getPhoneDigits(formValues.phoneNumber)) {
+      setSaveError("Please enter a mobile number after +91.")
+      return
+    }
+
     setSaving(true)
     setSaveMessage(null)
     setSaveError(null)
@@ -176,7 +196,7 @@ export default function ProfilePage() {
       await axiosInstance.put(`/employee/profile/${userId}`, {
         name: formValues.name.trim(),
         email: formValues.email.trim(),
-        phoneNumber: formValues.phoneNumber.trim(),
+        phoneNumber: normalizePhoneNumber(formValues.phoneNumber),
       })
       setSaveMessage("Profile details updated successfully.")
     } catch (error: unknown) {
@@ -278,7 +298,7 @@ export default function ProfilePage() {
           Profile
         </h1>
         <p className="mt-3 text-sm text-slate-500">
-          Update your name, email, phone number, and profile picture.
+          Update your name, phone number, and profile picture.
         </p>
        
       </section>
@@ -349,10 +369,9 @@ export default function ProfilePage() {
               <input
                 type="email"
                 value={formValues.email}
-                onChange={(event) =>
-                  handleInputChange("email", event.target.value)
-                }
-                className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100"
+                readOnly
+                disabled
+                className="w-full cursor-not-allowed rounded-xl border border-slate-200 bg-slate-100 px-4 py-3 text-sm text-slate-500"
                 placeholder="jane@example.com"
                 required
               />
@@ -369,7 +388,7 @@ export default function ProfilePage() {
                   handleInputChange("phoneNumber", event.target.value)
                 }
                 className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100"
-                placeholder="+15551234567"
+                placeholder="+91 9876543210"
                 required
               />
             </label>

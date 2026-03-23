@@ -1,0 +1,48 @@
+{
+  "journeyName": "Shared Journey Progress",
+  "currentStageId": "initiation",
+  "stages": [
+    {
+      "id": "initiation",
+      "label": "Initiation",
+      "iconKey": "file-search",
+      "screen": "eligibility-check",
+      "status": "active",
+      "canOpen": true,
+      "title": "Initiation Workflow",
+      "description": "Eligibility form is active for initiation.",
+      "nextStageId": "current-processing"
+    },
+    {
+      "id": "current-processing",
+      "label": "Current Processing",
+      "iconKey": "cpu",
+      "screen": "current-processing",
+      "status": "locked",
+      "canOpen": false,
+      "title": "Current Processing",
+      "description": "Active automation and dependency tracking.",
+      "nextStageId": "validation"
+    },
+    {
+      "id": "validation",
+      "label": "Validation",
+      "iconKey": "shield-check",
+      "screen": "validation",
+      "status": "locked",
+      "canOpen": false,
+      "title": "Validation",
+      "description": "QA checks, reviews, and approvals will be surfaced here."
+    },
+    {
+      "id": "final-output",
+      "label": "Final Output",
+      "iconKey": "flag",
+      "screen": "final-output",
+      "status": "locked",
+      "canOpen": false,
+      "title": "Final Output",
+      "description": "Final deliverables and handoff artifacts will be shown here."
+    }
+  ]
+}

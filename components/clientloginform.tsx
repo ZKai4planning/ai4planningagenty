@@ -293,6 +293,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type React from "react";
 import { FcGoogle } from "react-icons/fc";
@@ -513,18 +514,6 @@ const handleResendOtp = async () => {
         </h2>
       </div>
 
-      {step === "SUBMIT" && (
-        <button
-          type="button"
-         
-          className="w-full flex items-center justify-center gap-2 border border-slate-300 dark:border-slate-700 rounded-lg py-3 mb-6 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
-        >
-          <FcGoogle size={20} />
-          <span className="text-sm font-medium text-slate-700 dark:text-white">
-            Continue with Google
-          </span>
-        </button> 
-      )}
 
       <form className="space-y-6" onSubmit={handleSubmit}>
         <div className="group">
@@ -550,9 +539,17 @@ const handleResendOtp = async () => {
 
         {step === "SUBMIT" && (
           <div className="group">
-            <label className="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-2 block">
-              Password
-            </label>
+            <div className="mb-2 flex items-center justify-between gap-3">
+              <label className="text-[11px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500">
+                Password
+              </label>
+              <Link
+                href="/forgot-password"
+                className="text-[11px] font-medium text-primary hover:underline"
+              >
+                Forgot password?
+              </Link>
+            </div>
             <div className="relative">
  <input
               type={showPassword ? "text" : "password"}
