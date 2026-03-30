@@ -195,7 +195,7 @@ export default function ProfilePage() {
     try {
       await axiosInstance.put(`/employee/profile/${userId}`, {
         name: formValues.name.trim(),
-        email: formValues.email.trim(),
+        // email: formValues.email.trim(),
         phoneNumber: normalizePhoneNumber(formValues.phoneNumber),
       })
       setSaveMessage("Profile details updated successfully.")
