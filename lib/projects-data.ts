@@ -24,7 +24,9 @@ export type Project = {
   id: string
   serviceId: string
   serviceName: string
+  serviceTitle?: string
   subServices: string[]
+  subServiceTitle?: string
   clientQuestionnaire?: {
     propertyDetails?: {
       applicantFullName?: string
@@ -57,6 +59,7 @@ export type Project = {
     }
   }
   clientName?: string
+  applicantName?: string
   location?: string
   postcode?: string
   documentSubServices: string[]
@@ -79,6 +82,18 @@ export type Project = {
   messages: ProjectMessage[]
   status: ProjectStatus
   acceptance: AcceptanceStatus
+  projectStageId?: string
+  projectStageLabel?: string
+  projectStageRoute?: string
+  projectStatusRaw?: string
+  isDeleted?: boolean
+  eligibilityId?: string
+  eligibilityStatus?: string
+  eligibilityProgress?: number
+  eligibilityCompletedSteps?: number
+  eligibilityTotalSteps?: number
+  eligibilityNextStepLabel?: string
+  eligibilityUpdatedAt?: string
   createdAt: string
   origin: string
   destination: string

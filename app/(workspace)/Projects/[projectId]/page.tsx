@@ -2,7 +2,13 @@
 
 import Link from "next/link"
 import { useParams } from "next/navigation"
-import { useEffect, useMemo, useState, type ElementType } from "react"
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+  type ElementType,
+} from "react"
 import {
   AlertCircle,
   Building2,
@@ -33,6 +39,7 @@ import {
   initialProjects,
   normalizeProjects,
 } from "@/lib/projects-data"
+import { fetchProjectWithEligibility } from "@/lib/project-api"
 
 type JourneyStep = JourneyStageApiItem & {
   icon: ElementType
@@ -97,8 +104,6 @@ type EligibilityProject = Project & {
   postcode?: string
 }
 
-type AnswerMap = Record<string, string>
-
 const ELIGIBILITY_STEP_ID: JourneyStageId = "initiation"
 const PROJECT_LAST_ID_KEY = "ai4planning_last_project_id"
 const MISSING_VALUE = "Missing"
@@ -137,29 +142,6 @@ const notifyAgentXRequiredDocs = (href: string) => {
   } catch {
     // Ignore storage failures for static UI.
   }
-}
-
-const AGENT_X_ANSWERS: AnswerMap = {
-  "Property Type": "Terraced house",
-  "Ownership Status": "Freehold",
-  "Conservation Area or Listed Building?": "No",
-  "Purpose of Development": "Rear extension",
-  "Existing Property Width (m)": "5.4",
-  "Existing Property Depth (m)": "11.8",
-  "Proposed Extension Depth (m)": "3.6",
-  "Proposed Extension Height (m)": "3.2",
-  "External Materials": "Match existing",
-  "Brief Description of Proposed Works":
-    "Single-storey rear extension with open-plan kitchen-dining and rear glazing.",
-  "Listed Building?": "No",
-  "TPO? (Tree Preservation Order)": "No",
-  "Flood Zone?": "No",
-  "Vehicle access?": "Yes",
-  "Pre-application advice?": "No",
-  "Additional Consents Required": "None",
-  "Heritage Impact Assessment?": "Not required",
-  "Parking Impact?": "Low impact",
-  "Neighbour Consultation Required?": "No",
 }
 
 const buildEligibilitySections = (
@@ -323,6 +305,8 @@ export default function ProjectDetailsPage() {
   const [projects, setProjects] =
     useState<Project[]>(initialProjects)
   const [projectsLoaded, setProjectsLoaded] = useState(false)
+  const [projectLoading, setProjectLoading] = useState(true)
+  const [projectError, setProjectError] = useState<string | null>(null)
   const [automationLoading, setAutomationLoading] = useState(false)
   const [automationStatus, setAutomationStatus] = useState<
     "idle" | "running" | "failed"
@@ -339,20 +323,67 @@ export default function ProjectDetailsPage() {
   const [showAgentXModal, setShowAgentXModal] =
     useState(false)
 
-  useEffect(() => {
-    if (typeof window === "undefined") return
-    try {
-      const stored = localStorage.getItem(PROJECTS_STORAGE_KEY)
-      if (stored) {
-        const parsed = JSON.parse(stored)
-        setProjects(normalizeProjects(parsed))
+  const loadProjectData = useCallback(async () => {
+    let storedProjects: Project[] = []
+
+    if (typeof window !== "undefined") {
+      try {
+        const stored = localStorage.getItem(PROJECTS_STORAGE_KEY)
+        if (stored) {
+          storedProjects = normalizeProjects(JSON.parse(stored))
+          setProjects(storedProjects)
+        }
+      } catch {
+        // Keep defaults if storage is unavailable.
+      } finally {
+        setProjectsLoaded(true)
       }
-    } catch {
-      // Keep defaults if storage is unavailable.
-    } finally {
+    } else {
       setProjectsLoaded(true)
     }
-  }, [])
+
+    if (storedProjects.some((item) => item.id === resolvedProjectId)) {
+      setProjectLoading(false)
+      setProjectError(null)
+      return
+    }
+
+    setProjectLoading(true)
+    setProjectError(null)
+
+    try {
+      const liveProject = await fetchProjectWithEligibility(
+        resolvedProjectId
+      )
+
+      if (!liveProject) {
+        setProjectError("The project you requested does not exist.")
+        return
+      }
+
+      const nextProjects = [liveProject]
+      setProjects(nextProjects)
+
+      if (typeof window !== "undefined") {
+        try {
+          localStorage.setItem(
+            PROJECTS_STORAGE_KEY,
+            JSON.stringify(nextProjects)
+          )
+        } catch {
+          // Ignore storage failures for live project data.
+        }
+      }
+    } catch {
+      setProjectError("Failed to load the requested project.")
+    } finally {
+      setProjectLoading(false)
+    }
+  }, [resolvedProjectId])
+
+  useEffect(() => {
+    void loadProjectData()
+  }, [loadProjectData])
 
   useEffect(() => {
     if (!projectsLoaded || typeof window === "undefined") return
@@ -495,6 +526,21 @@ export default function ProjectDetailsPage() {
     setAutomationLoading(false)
   }
 
+  if (projectLoading) {
+    return (
+      <div className="space-y-6">
+        <section className="rounded-3xl border border-slate-200 bg-white p-8 shadow-sm">
+          <h1 className="text-2xl font-semibold text-slate-900">
+            Loading Project
+          </h1>
+          <p className="mt-2 text-sm text-slate-500">
+            Fetching project details and eligibility data.
+          </p>
+        </section>
+      </div>
+    )
+  }
+
   if (!project) {
     return (
       <div className="space-y-6">
@@ -503,7 +549,7 @@ export default function ProjectDetailsPage() {
             Project Not Found
           </h1>
           <p className="mt-2 text-sm text-slate-500">
-            The project you requested does not exist.
+            {projectError || "The project you requested does not exist."}
           </p>
           <Link
             href="/Projects"
