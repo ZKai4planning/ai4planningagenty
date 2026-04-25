@@ -1,15 +1,60 @@
 "use client"
 
 import type React from "react"
-import { useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
+import axiosInstance from "@/lib/axiosinstance"
 
 export function ForgotPasswordForm() {
+  const router = useRouter()
   const [email, setEmail] = useState("")
+  const [loading, setLoading] = useState(false)
+  const [successMessage, setSuccessMessage] = useState<string | null>(null)
+  const [errorMessage, setErrorMessage] = useState<string | null>(null)
+  const redirectTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  useEffect(() => {
+    return () => {
+      if (redirectTimeoutRef.current) {
+        clearTimeout(redirectTimeoutRef.current)
+      }
+    }
+  }, [])
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
-    console.log("Reset request for:", email)
+    if (redirectTimeoutRef.current) {
+      clearTimeout(redirectTimeoutRef.current)
+    }
+    setLoading(true)
+    setSuccessMessage(null)
+    setErrorMessage(null)
+
+    try {
+      const response = await axiosInstance.post("/admin/password-requests", {
+        email: email.trim(),
+      })
+
+      const message =
+        response?.data?.message || "If an account with this email exists, a password reset request has been submitted for admin approval.."
+
+      if (redirectTimeoutRef.current) {
+        clearTimeout(redirectTimeoutRef.current)
+      }
+
+      setSuccessMessage(`${message} Redirecting to sign in in 30 seconds.`)
+      setEmail("")
+      redirectTimeoutRef.current = setTimeout(() => {
+        router.push("/login")
+      }, 30000)
+    } catch (error: any) {
+      setErrorMessage(
+        error?.response?.data?.message || "Failed to submit password reset request."
+      )
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -20,9 +65,9 @@ export function ForgotPasswordForm() {
           <div className="inline-flex items-center justify-center size-12 rounded-full bg-primary/5 text-primary mb-4">
             <span className="material-symbols-outlined text-3xl">location_searching</span>
           </div>
-          <h1 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">Lost Password?</h1>
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">Forgot Password</h1>
           <p className="text-sm text-slate-500 dark:text-slate-400">
-            Enter your registered email to initialize the access recovery sequence.
+            Enter your email to reset your password.
           </p>
         </div>
 
@@ -31,7 +76,7 @@ export function ForgotPasswordForm() {
           <div className="group">
             <div className="flex justify-between items-end mb-2">
               <label className="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em]">
-                Primary_Email
+                Email
               </label>
               <span className="text-[9px] text-primary font-mono opacity-0 group-focus-within:opacity-100 transition-opacity">
                 INPUT_REQUIRED
@@ -40,48 +85,49 @@ export function ForgotPasswordForm() {
             <div className="relative">
               <input
                 className="w-full bg-slate-50 dark:bg-slate-800/30 border border-slate-200 dark:border-slate-700 rounded-none h-14 px-4 text-slate-900 dark:text-white placeholder:text-slate-400 focus:ring-0 focus:border-primary transition-all font-display"
-                placeholder="architect@system.ai"
+                placeholder="Enter your email"
                 required
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
+                disabled={loading}
               />
               <div className="absolute bottom-0 left-0 w-full h-[1px] bg-primary scale-x-0 group-focus-within:scale-x-100 transition-transform origin-left"></div>
             </div>
           </div>
 
+          {successMessage && (
+            <div className="rounded-sm border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
+              {successMessage}
+            </div>
+          )}
+
+          {errorMessage && (
+            <div className="rounded-sm border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+              {errorMessage}
+            </div>
+          )}
+
           <div className="space-y-4">
             <button
-              className="stamp-effect w-full bg-primary hover:bg-primary/90 text-white font-bold py-4 px-8 rounded-sm shadow-lg transition-all active:scale-[0.98] group relative overflow-hidden"
+              className="stamp-effect w-full bg-primary hover:bg-primary/90 text-white font-bold py-4 px-8 rounded-sm shadow-lg transition-all active:scale-[0.98] group relative overflow-hidden disabled:cursor-not-allowed disabled:opacity-70"
               type="submit"
+              disabled={loading}
             >
               <span className="relative flex items-center justify-center gap-3">
-                REQUEST ACCESS
+                {loading ? "Submitting..." : "Send Reset Request"}
                 <span className="material-symbols-outlined text-[18px]">satellite_alt</span>
               </span>
             </button>
             <Link
               className="flex items-center justify-center gap-2 text-xs font-bold text-slate-400 hover:text-primary transition-colors uppercase tracking-widest pt-2"
-              href="/"
+              href="/login"
             >
               <span className="material-symbols-outlined text-sm">arrow_back</span>
-              Return to Entry Point
+              Back to Sign In
             </Link>
           </div>
         </form>
-
-        {/* Notice */}
-        <div className="mt-10 pt-6 border-t border-slate-100 dark:border-slate-800">
-          <div className="flex items-center gap-4">
-            <div className="size-8 rounded bg-slate-50 dark:bg-slate-800 flex items-center justify-center text-slate-400">
-              <span className="material-symbols-outlined text-sm">info</span>
-            </div>
-            <p className="text-[10px] text-slate-500 dark:text-slate-400 leading-tight">
-              <span className="font-bold text-primary">ENCRYPTION NOTICE:</span> All recovery requests are logged with
-              current geo-coordinates and timestamped for architectural integrity.
-            </p>
-          </div>
-        </div>
       </div>
 
       {/* Side Reference */}

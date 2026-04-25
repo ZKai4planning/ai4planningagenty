@@ -3,7 +3,7 @@ import type { Metadata } from "next"
 import "./globals.css"
 
 export const metadata: Metadata = {
-  title: "Ai4Planning",
+  title: "AgentY",
   description:
     "Initialize authentication sequence to modify living blueprints and AI-optimized structural modules.",
   generator: "v0.app",

@@ -1,34 +1,55 @@
 "use client"
 
 import Link from "next/link"
-import { useEffect, useMemo, useState } from "react"
-import DataTable, { Column } from "@/components/datatable"
-import {
-  AgentUser,
-  INITIAL_USERS,
-  USERS_STORAGE_KEY,
-} from "@/lib/agent-users"
+import { useCallback, useEffect, useMemo, useState } from "react"
+import DataTable, { type Column } from "@/components/datatable"
 import {
   PROJECTS_STORAGE_KEY,
-  Project,
-  initialProjects,
   normalizeProjects,
+  type Project,
 } from "@/lib/projects-data"
+import { fetchAdminProjectsWithEligibility } from "@/lib/project-api"
 
 type ProjectRow = Project & {
-  consultantName: string
-  isActive: boolean
+  applicantDisplayName: string
+  stageDisplayName: string
+  eligibilityDisplayName: string
   progress: number
-  startDate: string
+  isActive: boolean
+  lastUpdated: string
+}
+
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === "object" && value !== null
+
+const getErrorMessage = (error: unknown, fallback: string) => {
+  if (
+    isRecord(error) &&
+    typeof error.message === "string" &&
+    error.message.trim() !== ""
+  ) {
+    return error.message
+  }
+
+  return fallback
+}
+
+const formatDate = (value: string) => {
+  if (!value) return "Not set"
+
+  const parsed = new Date(value)
+  if (Number.isNaN(parsed.getTime())) {
+    return value
+  }
+
+  return parsed.toLocaleDateString("en-GB")
 }
 
 export default function ProjectsPage() {
-  const [projects, setProjects] =
-    useState<Project[]>(initialProjects)
-  const [projectsLoaded, setProjectsLoaded] = useState(false)
-  const [users, setUsers] =
-    useState<AgentUser[]>(INITIAL_USERS)
-  const [usersLoaded, setUsersLoaded] = useState(false)
+  const [projects, setProjects] = useState<Project[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [lastSyncedAt, setLastSyncedAt] = useState<string | null>(null)
 
   const statusBadge = (status: Project["status"]) => {
     if (status === "Completed") {
@@ -43,34 +64,109 @@ export default function ProjectsPage() {
     return "bg-amber-50 text-amber-700 border-amber-100"
   }
 
-  const userLookup = useMemo(
-    () => new Map(users.map((user) => [user.id, user])),
-    [users]
-  )
+  const eligibilityBadge = (status: string) => {
+    if (status === "Completed") {
+      return "bg-emerald-50 text-emerald-700 border-emerald-100"
+    }
+    if (status === "Not Started") {
+      return "bg-slate-100 text-slate-600 border-slate-200"
+    }
+    return "bg-amber-50 text-amber-700 border-amber-100"
+  }
+
+  const syncProjectsToStorage = useCallback((nextProjects: Project[]) => {
+    if (typeof window === "undefined") return
+
+    try {
+      localStorage.setItem(
+        PROJECTS_STORAGE_KEY,
+        JSON.stringify(nextProjects)
+      )
+    } catch {
+      // Ignore storage failures for cached project data.
+    }
+  }, [])
+
+  const loadStoredProjects = useCallback(() => {
+    if (typeof window === "undefined") return []
+
+    try {
+      const stored = localStorage.getItem(PROJECTS_STORAGE_KEY)
+      if (!stored) return []
+
+      return normalizeProjects(JSON.parse(stored))
+    } catch {
+      return []
+    }
+  }, [])
+
+  const loadProjects = useCallback(async () => {
+    setLoading(true)
+    setError(null)
+
+    try {
+      const nextProjects = await fetchAdminProjectsWithEligibility()
+      setProjects(nextProjects)
+      syncProjectsToStorage(nextProjects)
+      setLastSyncedAt(new Date().toISOString())
+    } catch (nextError: unknown) {
+      const fallbackProjects = loadStoredProjects()
+
+      if (fallbackProjects.length > 0) {
+        setProjects(fallbackProjects)
+      }
+
+      setError(
+        getErrorMessage(
+          nextError,
+          "Unable to load projects from the API right now."
+        )
+      )
+    } finally {
+      setLoading(false)
+    }
+  }, [loadStoredProjects, syncProjectsToStorage])
+
+  useEffect(() => {
+    const storedProjects = loadStoredProjects()
+    if (storedProjects.length > 0) {
+      setProjects(storedProjects)
+    }
+
+    void loadProjects()
+  }, [loadProjects, loadStoredProjects])
 
   const tableData = useMemo<ProjectRow[]>(() => {
     return projects.map((project) => {
-      const accessNames = project.accessUsers.map((id) =>
-        userLookup.get(id)?.name ?? id
-      )
-      const consultantName =
-        accessNames[0] ?? "Unassigned"
-      const startDate = project.startAt || project.createdAt || ""
       const progress =
-        project.status === "Completed"
-          ? 100
-          : project.status === "Closed"
-          ? 0
-          : 60
+        typeof project.eligibilityProgress === "number"
+          ? project.eligibilityProgress
+          : project.status === "Completed"
+            ? 100
+            : project.status === "Closed"
+              ? 0
+              : 0
+
       return {
         ...project,
-        consultantName,
-        isActive: project.status === "In Progress",
+        applicantDisplayName:
+          project.applicantName ||
+          project.clientName ||
+          "Not provided",
+        stageDisplayName:
+          project.projectStageLabel || "Stage not available",
+        eligibilityDisplayName:
+          project.eligibilityStatus || "Not Started",
         progress,
-        startDate,
+        isActive: project.status === "In Progress",
+        lastUpdated:
+          project.eligibilityUpdatedAt ||
+          project.startAt ||
+          project.createdAt ||
+          "",
       }
     })
-  }, [projects, userLookup])
+  }, [projects])
 
   const columns: Column<ProjectRow>[] = [
     {
@@ -78,77 +174,63 @@ export default function ProjectsPage() {
       label: "Project ID",
       sortable: true,
       render: (_, row) => (
-        <span className="font-semibold text-slate-900">
-          {row.id}
-        </span>
-      ),
-    },
-    {
-      key: "consultantName",
-      label: "Consultant Name",
-      sortable: true,
-      render: (value) => (
-        <span className="text-sm font-semibold text-slate-800">
-          {String(value ?? "Unassigned")}
-        </span>
-      ),
-    },
-    {
-      key: "serviceName",
-      label: "Services",
-      sortable: true,
-      render: (value, row) => (
-        <div className="text-sm text-slate-700">
-          <p className="font-semibold text-slate-800">
-            {String(value ?? "")}
-          </p>
+        <div>
+          <p className="font-semibold text-slate-900">{row.id}</p>
           <p className="text-xs text-slate-500">
-            {String(row.serviceId ?? "")}
+            {row.projectStatusRaw || row.status}
           </p>
         </div>
       ),
     },
     {
-      key: "subServices",
-      label: "Subservices",
-      sortable: false,
-      render: (_, row) => {
-        const subServices = Array.isArray(row.subServices)
-          ? row.subServices
-          : row.subServices
-          ? [row.subServices as unknown as string]
-          : []
-        if (subServices.length === 0) {
-          return (
-            <span className="text-xs text-slate-400">
-              Not set
-            </span>
-          )
-        }
-        const preview = subServices.slice(0, 2)
-        const extra = subServices.length - preview.length
-        return (
-          <div className="flex flex-wrap gap-1">
-            {preview.map((item) => (
-              <span
-                key={item}
-                className="rounded-full border border-slate-200 bg-white px-2 py-1 text-[10px] font-semibold text-slate-600"
-              >
-                {item}
-              </span>
-            ))}
-            {extra > 0 && (
-              <span className="rounded-full border border-slate-200 bg-slate-50 px-2 py-1 text-[10px] font-semibold text-slate-500">
-                +{extra}
-              </span>
-            )}
-          </div>
-        )
-      },
+      key: "applicantDisplayName",
+      label: "Applicant",
+      sortable: true,
+      render: (_, row) => (
+        <div className="text-sm text-slate-700">
+          <p className="font-semibold text-slate-800">
+            {row.applicantDisplayName}
+          </p>
+          <p className="text-xs text-slate-500">
+            {row.clientQuestionnaire?.propertyDetails
+              ?.purposeOfDevelopment || "Purpose not provided"}
+          </p>
+        </div>
+      ),
+    },
+    {
+      key: "serviceName",
+      label: "Service",
+      sortable: true,
+      render: (_, row) => (
+        <div className="text-sm text-slate-700">
+          <p className="font-semibold text-slate-800">
+            {row.serviceName}
+          </p>
+          <p className="text-xs text-slate-500">
+            {row.subServices[0] || "Subservice not provided"}
+          </p>
+        </div>
+      ),
+    },
+    {
+      key: "stageDisplayName",
+      label: "Stage",
+      sortable: true,
+      render: (_, row) => (
+        <div className="text-sm text-slate-700">
+          <p className="font-semibold text-slate-800">
+            {row.stageDisplayName}
+          </p>
+          <p className="text-xs text-slate-500">
+            {row.projectStageRoute || "Route unavailable"}
+          </p>
+        </div>
+      ),
     },
     {
       key: "status",
-      label: "Status",
+      label: "Project Status",
       sortable: true,
       render: (value) => (
         <span
@@ -161,48 +243,61 @@ export default function ProjectsPage() {
       ),
     },
     {
+      key: "eligibilityDisplayName",
+      label: "Eligibility",
+      sortable: true,
+      render: (_, row) => (
+        <div className="min-w-[180px] space-y-1">
+          <span
+            className={`inline-flex rounded-full border px-2 py-1 text-[11px] font-semibold ${eligibilityBadge(
+              row.eligibilityDisplayName
+            )}`}
+          >
+            {row.eligibilityDisplayName}
+          </span>
+          <p className="text-xs text-slate-500">
+            {typeof row.eligibilityCompletedSteps === "number" &&
+            typeof row.eligibilityTotalSteps === "number" &&
+            row.eligibilityTotalSteps > 0
+              ? `${row.eligibilityCompletedSteps}/${row.eligibilityTotalSteps} steps completed`
+              : "Eligibility form not available"}
+          </p>
+          <p className="text-xs text-slate-500">
+            Next: {row.eligibilityNextStepLabel || "Not available"}
+          </p>
+        </div>
+      ),
+    },
+    {
       key: "progress",
       label: "Progress",
       sortable: true,
-      render: (value) => {
-        const numeric =
-          typeof value === "number" ? value : 0
-        return (
-          <div className="min-w-[140px]">
-            <div className="flex items-center justify-between text-[11px] text-slate-500">
-              <span>Progress</span>
-              <span className="font-semibold text-slate-700">
-                {numeric}%
-              </span>
-            </div>
-            <div className="mt-1 h-2 w-full rounded-full bg-slate-100">
-              <div
-                className="h-2 rounded-full bg-blue-600"
-                style={{ width: `${numeric}%` }}
-              />
-            </div>
+      render: (_, row) => (
+        <div className="min-w-[140px]">
+          <div className="flex items-center justify-between text-[11px] text-slate-500">
+            <span>Eligibility</span>
+            <span className="font-semibold text-slate-700">
+              {row.progress}%
+            </span>
           </div>
-        )
-      },
+          <div className="mt-1 h-2 w-full rounded-full bg-slate-100">
+            <div
+              className="h-2 rounded-full bg-blue-600"
+              style={{ width: `${row.progress}%` }}
+            />
+          </div>
+        </div>
+      ),
     },
     {
-      key: "startDate",
-      label: "Start Date",
+      key: "lastUpdated",
+      label: "Last Updated",
       sortable: true,
-      render: (value) => {
-        if (!value) {
-          return <span className="text-xs text-slate-400">Not set</span>
-        }
-        const parsed = new Date(String(value))
-        const formatted = Number.isNaN(parsed.getTime())
-          ? String(value)
-          : parsed.toLocaleDateString("en-GB")
-        return (
-          <span className="text-sm text-slate-700">
-            {formatted}
-          </span>
-        )
-      },
+      render: (value) => (
+        <span className="text-sm text-slate-700">
+          {formatDate(String(value ?? ""))}
+        </span>
+      ),
     },
     {
       key: "actions",
@@ -218,62 +313,6 @@ export default function ProjectsPage() {
     },
   ]
 
-  useEffect(() => {
-    if (typeof window === "undefined") return
-    try {
-      const stored = localStorage.getItem(PROJECTS_STORAGE_KEY)
-      if (stored) {
-        const parsed = JSON.parse(stored)
-        setProjects(normalizeProjects(parsed))
-      }
-    } catch {
-      // Keep defaults if storage is unavailable.
-    } finally {
-      setProjectsLoaded(true)
-    }
-  }, [])
-
-  useEffect(() => {
-    if (!projectsLoaded || typeof window === "undefined") return
-    try {
-      localStorage.setItem(
-        PROJECTS_STORAGE_KEY,
-        JSON.stringify(projects)
-      )
-    } catch {
-      // Ignore storage failures for static UI.
-    }
-  }, [projects, projectsLoaded])
-
-  useEffect(() => {
-    if (typeof window === "undefined") return
-    try {
-      const stored = localStorage.getItem(USERS_STORAGE_KEY)
-      if (stored) {
-        const parsed = JSON.parse(stored) as AgentUser[]
-        if (Array.isArray(parsed)) {
-          setUsers(parsed)
-        }
-      }
-    } catch {
-      // Keep defaults if storage is unavailable.
-    } finally {
-      setUsersLoaded(true)
-    }
-  }, [])
-
-  useEffect(() => {
-    if (!usersLoaded || typeof window === "undefined") return
-    try {
-      localStorage.setItem(
-        USERS_STORAGE_KEY,
-        JSON.stringify(users)
-      )
-    } catch {
-      // Ignore storage failures for static UI.
-    }
-  }, [users, usersLoaded])
-
   return (
     <div className="space-y-6">
       <section
@@ -286,16 +325,51 @@ export default function ProjectsPage() {
               Projects Overview
             </h2>
             <p className="text-xs text-slate-500">
-              Key project details at a glance.
+              Live projects from `/projects/all` with eligibility
+              progress from `/eligibility/:projectId`.
             </p>
           </div>
-          <div className="inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600">
-            {projects.length} total projects
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600">
+              {projects.length} total projects
+            </div>
+            {lastSyncedAt && (
+              <div className="inline-flex items-center gap-2 rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">
+                Synced {formatDate(lastSyncedAt)}
+              </div>
+            )}
+            <button
+              type="button"
+              onClick={() => void loadProjects()}
+              disabled={loading}
+              className="rounded-full border border-slate-200 bg-white px-4 py-2 text-xs font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {loading ? "Refreshing..." : "Refresh"}
+            </button>
           </div>
         </div>
 
+        {error && (
+          <div className="border-b border-amber-200 bg-amber-50 px-6 py-3 text-sm text-amber-800">
+            {error}
+            {projects.length > 0
+              ? " Showing the latest cached data."
+              : ""}
+          </div>
+        )}
+
         <div className="p-6">
-          <DataTable data={tableData} columns={columns} />
+          {loading && projects.length === 0 ? (
+            <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-8 text-center text-sm text-slate-500">
+              Loading projects...
+            </div>
+          ) : tableData.length > 0 ? (
+            <DataTable data={tableData} columns={columns} />
+          ) : (
+            <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-4 py-8 text-center text-sm text-slate-500">
+              No projects were returned by the API.
+            </div>
+          )}
         </div>
       </section>
     </div>

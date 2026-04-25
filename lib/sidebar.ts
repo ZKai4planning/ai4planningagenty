@@ -1,8 +1,6 @@
 import {
   FiHome,
   FiUser,
-  FiSettings,
-  FiLogOut,
   FiLayers,
   FiFileText,
   FiCheckSquare,
@@ -74,11 +72,6 @@ export const SIDEBAR_ITEMS: SidebarItem[] = [
 // },
 
  
-  {
-    id: "logout",
-    label: "Logout",
-    icon: FiLogOut,
-  },
 ]
  
  

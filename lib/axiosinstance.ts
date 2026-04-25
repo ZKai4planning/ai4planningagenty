@@ -15,17 +15,18 @@ const axiosInstance = axios.create({
  
 axiosInstance.interceptors.request.use(
   (config) => {
-    const auth =
+    const rawAuth =
       sessionStorage.getItem("currentAuth") ||
-      localStorage.getItem("currentAuth");
- 
-    if (auth) {
-      const { token } = JSON.parse(auth);
-      if (token) {
-        config.headers.Authorization = `Bearer ${token}`;
-      }
+      localStorage.getItem("currentAuth") ||
+      sessionStorage.getItem("ai4planning-auth") ||
+      localStorage.getItem("ai4planning-auth");
+
+    if (rawAuth) {
+      const parsed = JSON.parse(rawAuth);
+      const token = parsed?.token ?? parsed?.state?.token;
+      if (token) config.headers.Authorization = `Bearer ${token}`;
     }
- 
+
     return config;
   },
   (error) => Promise.reject(error)

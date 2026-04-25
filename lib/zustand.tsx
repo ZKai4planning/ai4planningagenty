@@ -2,10 +2,14 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
 interface AuthState {
+  token: string | null;
+  userId: string | null;
   userName: string | null;
   role: "admin" | "employee" | null;
   region: "India" | "UK" | null;
 
+  setToken: (token: string | null) => void;
+  setUserId: (userId: string | null) => void;
   setUser: (payload: {
     userName: string;
     role: "admin" | "employee";
@@ -17,9 +21,19 @@ interface AuthState {
 export const useAuthStore = create<AuthState>()(
   persist(
     (set) => ({
+      token: null,
+      userId: null,
       userName: null,
       role: null,
       region: null,
+
+      setToken: (token) => {
+        set({ token });
+      },
+
+      setUserId: (userId) => {
+        set({ userId });
+      },
 
       setUser: ({ userName, role, region }) => {
         set({
@@ -30,7 +44,13 @@ export const useAuthStore = create<AuthState>()(
       },
 
       clearAuth: () => {
-        set({ userName: null, role: null, region: null });
+        set({
+          token: null,
+          userId: null,
+          userName: null,
+          role: null,
+          region: null,
+        });
       },
     }),
     {

@@ -102,6 +102,113 @@ import { usePathname } from "next/navigation"
 import { useAuthStore } from "../../lib/zustand"
 import { PROJECTS_STORAGE_KEY } from "../../lib/projects-data"
 import { USERS_STORAGE_KEY } from "../../lib/agent-users"
+import axiosInstance from "../../lib/axiosinstance"
+
+type EmployeeProfileSummary = {
+  name: string | null
+  email: string | null
+  profilePicture: string | null
+  completionPercentage: number | null
+  completedFields: number | null
+  totalFields: number | null
+}
+
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === "object" && value !== null
+
+const extractProfileSummary = (
+  payload: unknown
+): Pick<EmployeeProfileSummary, "name" | "email" | "profilePicture"> => {
+  const candidates: unknown[] = []
+  if (isRecord(payload)) {
+    candidates.push(payload)
+    candidates.push(payload.data)
+    candidates.push(payload.profile)
+    if (isRecord(payload.data)) {
+      candidates.push(payload.data.data)
+      candidates.push(payload.data.profile)
+    }
+  }
+
+  for (const candidate of candidates) {
+    if (!isRecord(candidate)) continue
+    const name =
+      typeof candidate.name === "string"
+        ? candidate.name.trim()
+        : ""
+    const email =
+      typeof candidate.email === "string"
+        ? candidate.email.trim()
+        : ""
+    const profilePicture =
+      typeof candidate.profilePicture === "string"
+        ? candidate.profilePicture.trim()
+        : ""
+
+    if (name || email || profilePicture) {
+      return {
+        name: name || null,
+        email: email || null,
+        profilePicture: profilePicture || null,
+      }
+    }
+  }
+
+  return { name: null, email: null, profilePicture: null }
+}
+
+const extractCompletionSummary = (
+  payload: unknown
+): Pick<
+  EmployeeProfileSummary,
+  "completionPercentage" | "completedFields" | "totalFields"
+> => {
+  const candidates: unknown[] = []
+  if (isRecord(payload)) {
+    candidates.push(payload)
+    candidates.push(payload.data)
+    candidates.push(payload.status)
+    if (isRecord(payload.data)) {
+      candidates.push(payload.data.data)
+      candidates.push(payload.data.status)
+    }
+  }
+
+  for (const candidate of candidates) {
+    if (!isRecord(candidate)) continue
+
+    const completionPercentage =
+      typeof candidate.completionPercentage === "number"
+        ? candidate.completionPercentage
+        : null
+    const completedFields =
+      typeof candidate.completedFields === "number"
+        ? candidate.completedFields
+        : null
+    const totalFields =
+      typeof candidate.totalFields === "number"
+        ? candidate.totalFields
+        : null
+
+    if (
+      completionPercentage !== null ||
+      completedFields !== null ||
+      totalFields !== null
+    ) {
+      return {
+        completionPercentage,
+        completedFields,
+        totalFields,
+      }
+    }
+  }
+
+  return {
+    completionPercentage: null,
+    completedFields: null,
+    totalFields: null,
+  }
+}
 
 export default function DashboardLayout({
   children,
@@ -113,7 +220,17 @@ export default function DashboardLayout({
   const [collapsed, setCollapsed] = useState(false)
   const [showGetStarted, setShowGetStarted] = useState(false)
   const [dataCleared, setDataCleared] = useState(false)
+  const [employeeProfile, setEmployeeProfile] =
+    useState<EmployeeProfileSummary>({
+      name: null,
+      email: null,
+      profilePicture: null,
+      completionPercentage: null,
+      completedFields: null,
+      totalFields: null,
+    })
   const pathname = usePathname()
+  const userId = useAuthStore((state) => state.userId)
   const userName = useAuthStore((state) => state.userName)
   const userRegion = useAuthStore((state) => state.region)
 
@@ -132,6 +249,70 @@ export default function DashboardLayout({
       setDataCleared(true)
     }
   }, [])
+
+  useEffect(() => {
+    if (!userId) {
+      setEmployeeProfile({
+        name: null,
+        email: null,
+        profilePicture: null,
+        completionPercentage: null,
+        completedFields: null,
+        totalFields: null,
+      })
+      return
+    }
+
+    let active = true
+
+    const loadEmployeeProfile = async () => {
+      try {
+        const [profileResult, statusResult] = await Promise.allSettled([
+          axiosInstance.get(`/employee/profile/${userId}`),
+          axiosInstance.get(`/employee/profile/${userId}/status`),
+        ])
+
+        if (!active) return
+
+        setEmployeeProfile({
+          ...(
+            profileResult.status === "fulfilled"
+              ? extractProfileSummary(profileResult.value.data)
+              : {
+                  name: null,
+                  email: null,
+                  profilePicture: null,
+                }
+          ),
+          ...(
+            statusResult.status === "fulfilled"
+              ? extractCompletionSummary(statusResult.value.data)
+              : {
+                  completionPercentage: null,
+                  completedFields: null,
+                  totalFields: null,
+                }
+          ),
+        })
+      } catch {
+        if (!active) return
+        setEmployeeProfile({
+          name: null,
+          email: null,
+          profilePicture: null,
+          completionPercentage: null,
+          completedFields: null,
+          totalFields: null,
+        })
+      }
+    }
+
+    void loadEmployeeProfile()
+
+    return () => {
+      active = false
+    }
+  }, [userId])
 
   const breadcrumbs = useMemo(() => {
     const segments = pathname.split("/").filter(Boolean)
@@ -155,6 +336,9 @@ export default function DashboardLayout({
   }, [pathname])
 
   const toggleSidebar = () => setCollapsed((prev) => !prev)
+  const resolvedUserName =
+    employeeProfile.name || userName || employeeProfile.email || "Employee"
+  const resolvedUserEmail = employeeProfile.email
 
   if (!dataCleared) {
     return null
@@ -170,6 +354,8 @@ export default function DashboardLayout({
         onToggle={toggleSidebar}
         onGetStarted={() => setShowGetStarted(true)}
         isOverlay={!isLaptopUp}
+        userDisplayName={resolvedUserName}
+        userDisplayEmail={resolvedUserEmail}
       />
 
       {/* Overlay (mobile/tablet) */}
@@ -184,8 +370,13 @@ export default function DashboardLayout({
       <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
         <DashboardHeader
           breadcrumbs={breadcrumbs}
-          userName={userName || "Admin"}
+          userName={resolvedUserName}
+          userEmail={resolvedUserEmail}
           userRegion={userRegion}
+          userAvatarUrl={employeeProfile.profilePicture}
+          profileCompletionPercentage={employeeProfile.completionPercentage}
+          completedFields={employeeProfile.completedFields}
+          totalFields={employeeProfile.totalFields}
           collapsed={collapsed}
           onToggle={toggleSidebar}
         />

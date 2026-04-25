@@ -2,7 +2,13 @@
 
 import Link from "next/link"
 import { useParams } from "next/navigation"
-import { useEffect, useMemo, useState, type ElementType } from "react"
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+  type ElementType,
+} from "react"
 import {
   AlertCircle,
   Building2,
@@ -19,40 +25,35 @@ import {
 import ConstructionLoadingDock from "@/components/ConstructionLoadingDock"
 import AgentY from "@/components/agenty"
 import {
+  advanceMockJourneyStage,
+  getMockJourneyRoadmap,
+  type JourneyRoadmapApiResponse,
+  type JourneyStageApiItem,
+  type JourneyStageIconKey,
+  type JourneyStageId,
+  type JourneyStageStatus,
+} from "@/lib/mock-journey-roadmap"
+import {
   PROJECTS_STORAGE_KEY,
   Project,
   initialProjects,
   normalizeProjects,
 } from "@/lib/projects-data"
+import { fetchProjectWithEligibility } from "@/lib/project-api"
 
-type JourneyStep = {
-  id: string
-  label: string
+type JourneyStep = JourneyStageApiItem & {
   icon: ElementType
 }
 
-const JOURNEY_STEPS: JourneyStep[] = [
-  {
-    id: "initiation",
-    label: "Initiation",
-    icon: FileSearch,
-  },
-  {
-    id: "current-processing",
-    label: "Current Processing",
-    icon: Cpu,
-  },
-  {
-    id: "validation",
-    label: "Validation",
-    icon: ShieldCheck,
-  },
-  {
-    id: "final-output",
-    label: "Final Output",
-    icon: Flag,
-  },
-]
+const JOURNEY_STAGE_ICON_MAP: Record<
+  JourneyStageIconKey,
+  ElementType
+> = {
+  "file-search": FileSearch,
+  cpu: Cpu,
+  "shield-check": ShieldCheck,
+  flag: Flag,
+}
 
 type EligibilityQuestionItem = {
   question: string
@@ -103,9 +104,7 @@ type EligibilityProject = Project & {
   postcode?: string
 }
 
-type AnswerMap = Record<string, string>
-
-const ELIGIBILITY_STEP_ID = "initiation"
+const ELIGIBILITY_STEP_ID: JourneyStageId = "initiation"
 const PROJECT_LAST_ID_KEY = "ai4planning_last_project_id"
 const MISSING_VALUE = "Missing"
 const NOTIFICATION_STORAGE_KEY =
@@ -143,29 +142,6 @@ const notifyAgentXRequiredDocs = (href: string) => {
   } catch {
     // Ignore storage failures for static UI.
   }
-}
-
-const AGENT_X_ANSWERS: AnswerMap = {
-  "Property Type": "Terraced house",
-  "Ownership Status": "Freehold",
-  "Conservation Area or Listed Building?": "No",
-  "Purpose of Development": "Rear extension",
-  "Existing Property Width (m)": "5.4",
-  "Existing Property Depth (m)": "11.8",
-  "Proposed Extension Depth (m)": "3.6",
-  "Proposed Extension Height (m)": "3.2",
-  "External Materials": "Match existing",
-  "Brief Description of Proposed Works":
-    "Single-storey rear extension with open-plan kitchen-dining and rear glazing.",
-  "Listed Building?": "No",
-  "TPO? (Tree Preservation Order)": "No",
-  "Flood Zone?": "No",
-  "Vehicle access?": "Yes",
-  "Pre-application advice?": "No",
-  "Additional Consents Required": "None",
-  "Heritage Impact Assessment?": "Not required",
-  "Parking Impact?": "Low impact",
-  "Neighbour Consultation Required?": "No",
 }
 
 const buildEligibilitySections = (
@@ -307,6 +283,18 @@ const buildEligibilitySections = (
   ]
 }
 
+const decorateJourneyStage = (
+  stage: JourneyStageApiItem
+): JourneyStep => ({
+  ...stage,
+  icon: JOURNEY_STAGE_ICON_MAP[stage.iconKey],
+})
+
+const findJourneyStageIndex = (
+  stages: JourneyStep[],
+  stageId: JourneyStageId | null
+) => stages.findIndex((stage) => stage.id === stageId)
+
 export default function ProjectDetailsPage() {
   const params = useParams()
   const rawProjectId = (params?.projectId as string) ?? ""
@@ -317,32 +305,85 @@ export default function ProjectDetailsPage() {
   const [projects, setProjects] =
     useState<Project[]>(initialProjects)
   const [projectsLoaded, setProjectsLoaded] = useState(false)
+  const [projectLoading, setProjectLoading] = useState(true)
+  const [projectError, setProjectError] = useState<string | null>(null)
   const [automationLoading, setAutomationLoading] = useState(false)
   const [automationStatus, setAutomationStatus] = useState<
     "idle" | "running" | "failed"
   >("idle")
   const [automationStep, setAutomationStep] = useState(0)
-  const [activeJourneyStep, setActiveJourneyStep] = useState(0)
+  const [journeyRoadmap, setJourneyRoadmap] =
+    useState<JourneyRoadmapApiResponse | null>(null)
+  const [journeyLoading, setJourneyLoading] = useState(true)
+  const [openedJourneyStageId, setOpenedJourneyStageId] =
+    useState<JourneyStageId | null>(null)
   const [awaitingAgentX, setAwaitingAgentX] = useState(false)
   const [showAgentXFollowUp, setShowAgentXFollowUp] =
     useState(false)
   const [showAgentXModal, setShowAgentXModal] =
     useState(false)
 
-  useEffect(() => {
-    if (typeof window === "undefined") return
-    try {
-      const stored = localStorage.getItem(PROJECTS_STORAGE_KEY)
-      if (stored) {
-        const parsed = JSON.parse(stored)
-        setProjects(normalizeProjects(parsed))
+  const loadProjectData = useCallback(async () => {
+    let storedProjects: Project[] = []
+
+    if (typeof window !== "undefined") {
+      try {
+        const stored = localStorage.getItem(PROJECTS_STORAGE_KEY)
+        if (stored) {
+          storedProjects = normalizeProjects(JSON.parse(stored))
+          setProjects(storedProjects)
+        }
+      } catch {
+        // Keep defaults if storage is unavailable.
+      } finally {
+        setProjectsLoaded(true)
       }
-    } catch {
-      // Keep defaults if storage is unavailable.
-    } finally {
+    } else {
       setProjectsLoaded(true)
     }
-  }, [])
+
+    if (storedProjects.some((item) => item.id === resolvedProjectId)) {
+      setProjectLoading(false)
+      setProjectError(null)
+      return
+    }
+
+    setProjectLoading(true)
+    setProjectError(null)
+
+    try {
+      const liveProject = await fetchProjectWithEligibility(
+        resolvedProjectId
+      )
+
+      if (!liveProject) {
+        setProjectError("The project you requested does not exist.")
+        return
+      }
+
+      const nextProjects = [liveProject]
+      setProjects(nextProjects)
+
+      if (typeof window !== "undefined") {
+        try {
+          localStorage.setItem(
+            PROJECTS_STORAGE_KEY,
+            JSON.stringify(nextProjects)
+          )
+        } catch {
+          // Ignore storage failures for live project data.
+        }
+      }
+    } catch {
+      setProjectError("Failed to load the requested project.")
+    } finally {
+      setProjectLoading(false)
+    }
+  }, [resolvedProjectId])
+
+  useEffect(() => {
+    void loadProjectData()
+  }, [loadProjectData])
 
   useEffect(() => {
     if (!projectsLoaded || typeof window === "undefined") return
@@ -356,10 +397,61 @@ export default function ProjectDetailsPage() {
     }
   }, [projects, projectsLoaded])
 
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      const roadmap = getMockJourneyRoadmap()
+      setJourneyRoadmap(roadmap)
+      setOpenedJourneyStageId(roadmap.currentStageId)
+      setJourneyLoading(false)
+    }, 250)
+
+    return () => window.clearTimeout(timer)
+  }, [])
+
   const project = useMemo(
     () => projects.find((item) => item.id === resolvedProjectId),
     [projects, resolvedProjectId]
   )
+
+  const journeySteps = useMemo(
+    () =>
+      (journeyRoadmap?.stages ?? []).map(decorateJourneyStage),
+    [journeyRoadmap]
+  )
+
+  const currentJourneyStepIndex = useMemo(
+    () =>
+      findJourneyStageIndex(
+        journeySteps,
+        journeyRoadmap?.currentStageId ?? null
+      ),
+    [journeyRoadmap, journeySteps]
+  )
+
+  const currentJourneyStage =
+    currentJourneyStepIndex >= 0
+      ? journeySteps[currentJourneyStepIndex]
+      : null
+
+  const openedJourneyStageIndex = useMemo(() => {
+    const selectedIndex = findJourneyStageIndex(
+      journeySteps,
+      openedJourneyStageId
+    )
+
+    return selectedIndex >= 0
+      ? selectedIndex
+      : currentJourneyStepIndex
+  }, [
+    currentJourneyStepIndex,
+    journeySteps,
+    openedJourneyStageId,
+  ])
+
+  const openedJourneyStage =
+    openedJourneyStageIndex >= 0
+      ? journeySteps[openedJourneyStageIndex]
+      : null
 
   useEffect(() => {
     if (!project || typeof window === "undefined") return
@@ -390,6 +482,29 @@ export default function ProjectDetailsPage() {
     notifyAgentXRequiredDocs(href)
   }, [showAgentXFollowUp, project])
 
+  const handleJourneyStepOpen = (stageId: JourneyStageId) => {
+    const selectedStage = journeyRoadmap?.stages.find(
+      (stage) => stage.id === stageId
+    )
+
+    if (!selectedStage?.canOpen) {
+      return
+    }
+
+    setOpenedJourneyStageId(stageId)
+  }
+
+  const moveJourneyToStage = (nextStageId: JourneyStageId) => {
+    setJourneyRoadmap((current) => {
+      if (!current) {
+        return current
+      }
+
+      return advanceMockJourneyStage(current, nextStageId)
+    })
+    setOpenedJourneyStageId(nextStageId)
+  }
+
   const runAutomation = async () => {
     if (!project) return
     setAutomationLoading(true)
@@ -411,6 +526,21 @@ export default function ProjectDetailsPage() {
     setAutomationLoading(false)
   }
 
+  if (projectLoading) {
+    return (
+      <div className="space-y-6">
+        <section className="rounded-3xl border border-slate-200 bg-white p-8 shadow-sm">
+          <h1 className="text-2xl font-semibold text-slate-900">
+            Loading Project
+          </h1>
+          <p className="mt-2 text-sm text-slate-500">
+            Fetching project details and eligibility data.
+          </p>
+        </section>
+      </div>
+    )
+  }
+
   if (!project) {
     return (
       <div className="space-y-6">
@@ -419,7 +549,7 @@ export default function ProjectDetailsPage() {
             Project Not Found
           </h1>
           <p className="mt-2 text-sm text-slate-500">
-            The project you requested does not exist.
+            {projectError || "The project you requested does not exist."}
           </p>
           <Link
             href="/Projects"
@@ -460,32 +590,53 @@ export default function ProjectDetailsPage() {
               <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
                 <div>
                   <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">
-                    Shared Journey Progress
+                    {journeyRoadmap?.journeyName ??
+                      "Shared Journey Progress"}
                   </p>
                   <h2 className="mt-2 text-lg font-semibold text-slate-900">
-                    Initiation Workflow
+                    {openedJourneyStage?.title ??
+                      "Loading roadmap..."}
                   </h2>
                   <p className="text-xs text-slate-500">
-                    Eligibility form is active for initiation.
+                    {openedJourneyStage?.description ??
+                      "Fetching roadmap stages from mock API data."}
                   </p>
+                  {openedJourneyStage &&
+                    currentJourneyStage &&
+                    openedJourneyStage.id !==
+                      currentJourneyStage.id && (
+                      <p className="mt-2 text-xs font-medium text-slate-600">
+                        Viewing stage:{" "}
+                        {openedJourneyStage.label}
+                      </p>
+                    )}
                 </div>
                 <span className="inline-flex items-center rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">
-                  Phase: {JOURNEY_STEPS[activeJourneyStep]?.label}
+                  Phase:{" "}
+                  {currentJourneyStage?.label ?? "Loading"}
                 </span>
               </div>
 
-              <JourneyRoadmap
-                steps={JOURNEY_STEPS}
-                activeStep={activeJourneyStep}
-              />
+              {journeyLoading ? (
+                <div className="mt-6 rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-4 py-6 text-sm text-slate-500">
+                  Loading roadmap from mock backend JSON...
+                </div>
+              ) : (
+                <JourneyRoadmap
+                  steps={journeySteps}
+                  currentStepIndex={currentJourneyStepIndex}
+                  openedStageId={openedJourneyStage?.id ?? null}
+                  onStepClick={handleJourneyStepOpen}
+                />
+              )}
             </div>
 
             <div>
               <EligibilityCheckDetails
                 project={project as EligibilityProject}
                 isActive={
-                  JOURNEY_STEPS[activeJourneyStep]?.id ===
-                  ELIGIBILITY_STEP_ID
+                  openedJourneyStage?.screen ===
+                  "eligibility-check"
                 }
                 onRunBriefcase={runAutomation}
                 onSubmitSuccess={() => {
@@ -496,7 +647,7 @@ export default function ProjectDetailsPage() {
                 activeAutomationStep={automationStep}
               />
               {awaitingAgentX &&
-                JOURNEY_STEPS[activeJourneyStep]?.id ===
+                openedJourneyStage?.id ===
                   ELIGIBILITY_STEP_ID && (
                   <div className="mt-6 space-y-4">
                     <div className="rounded-2xl border border-emerald-100 bg-emerald-50 p-6 text-sm text-emerald-800 shadow-sm">
@@ -621,12 +772,11 @@ export default function ProjectDetailsPage() {
                                 setAwaitingAgentX(false)
                                 setShowAgentXFollowUp(false)
                                 setShowAgentXModal(false)
-                                setActiveJourneyStep((prev) =>
-                                  Math.min(
-                                    prev + 1,
-                                    JOURNEY_STEPS.length - 1
+                                if (openedJourneyStage?.nextStageId) {
+                                  moveJourneyToStage(
+                                    openedJourneyStage.nextStageId
                                   )
-                                )
+                                }
                               }}
                               className="rounded-full bg-emerald-600 px-4 py-2 text-xs font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-emerald-700 hover:shadow-md active:translate-y-0"
                             >
@@ -640,9 +790,19 @@ export default function ProjectDetailsPage() {
                 )}
               <CurrentProcessingDetails
                 isActive={
-                  JOURNEY_STEPS[activeJourneyStep]?.id ===
+                  openedJourneyStage?.screen ===
                   "current-processing"
                 }
+                title={openedJourneyStage?.title}
+                description={openedJourneyStage?.description}
+              />
+              <JourneyStagePlaceholder
+                stage={openedJourneyStage}
+                isActive={openedJourneyStage?.screen === "validation"}
+              />
+              <JourneyStagePlaceholder
+                stage={openedJourneyStage}
+                isActive={openedJourneyStage?.screen === "final-output"}
               />
             </div>
           </div>
@@ -671,10 +831,16 @@ function RoadmapStep({
   label,
   status,
   icon: Icon,
+  canOpen,
+  isSelected,
+  onClick,
 }: {
   label: string
-  status: "completed" | "active" | "locked"
+  status: JourneyStageStatus
   icon: ElementType
+  canOpen: boolean
+  isSelected: boolean
+  onClick: () => void
 }) {
   const isCompleted = status === "completed"
   const isActive = status === "active"
@@ -682,7 +848,14 @@ function RoadmapStep({
   const StepIcon = isCompleted ? CheckCircle : isLocked ? Lock : Icon
 
   return (
-    <div className="flex flex-col items-center gap-2 min-w-[120px]">
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={!canOpen}
+      className={`flex min-w-[120px] flex-col items-center gap-2 ${
+        canOpen ? "cursor-pointer" : "cursor-not-allowed"
+      }`}
+    >
       <div
         className={`
           w-10 h-10 rounded-full flex items-center justify-center border
@@ -693,6 +866,7 @@ function RoadmapStep({
               ? "border-2 border-emerald-500 text-emerald-600 bg-white shadow-[0_8px_20px_rgba(16,185,129,0.15)]"
               : "border-slate-200 bg-slate-50 text-slate-400"
           }
+          ${isSelected ? "ring-4 ring-emerald-100" : ""}
         `}
       >
         <StepIcon className="w-5 h-5" />
@@ -700,7 +874,7 @@ function RoadmapStep({
 
       <span
         className={`text-xs text-center ${
-          isActive
+          isSelected || isActive
             ? "text-emerald-600 font-semibold"
             : isCompleted
             ? "text-emerald-700"
@@ -709,7 +883,7 @@ function RoadmapStep({
       >
         {label}
       </span>
-    </div>
+    </button>
   )
 }
 
@@ -1180,8 +1354,12 @@ function EligibilityCheckDetails({
 
 function CurrentProcessingDetails({
   isActive,
+  title,
+  description,
 }: {
   isActive: boolean
+  title?: string
+  description?: string
 }) {
   if (!isActive) {
     return null
@@ -1193,10 +1371,11 @@ function CurrentProcessingDetails({
         <div className="flex items-center justify-between border-b border-slate-200 px-6 py-4">
           <div>
             <h3 className="text-lg font-semibold text-slate-900">
-              Current Processing
+              {title || "Current Processing"}
             </h3>
             <p className="text-xs text-slate-500">
-              Active automation and dependency tracking.
+              {description ||
+                "Active automation and dependency tracking."}
             </p>
           </div>
         </div>
@@ -1208,15 +1387,57 @@ function CurrentProcessingDetails({
   )
 }
 
+function JourneyStagePlaceholder({
+  stage,
+  isActive,
+}: {
+  stage: JourneyStep | null
+  isActive: boolean
+}) {
+  if (!isActive || !stage) {
+    return null
+  }
+
+  const StageIcon = stage.icon
+
+  return (
+    <div className="mt-6">
+      <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+        <div className="flex items-start gap-3">
+          <div className="flex h-11 w-11 items-center justify-center rounded-full bg-emerald-50 text-emerald-600">
+            <StageIcon className="h-5 w-5" />
+          </div>
+          <div>
+            <h3 className="text-lg font-semibold text-slate-900">
+              {stage.title}
+            </h3>
+            <p className="mt-1 text-sm text-slate-500">
+              {stage.description}
+            </p>
+          </div>
+        </div>
+        <div className="mt-5 rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-4 py-5 text-sm text-slate-600">
+          This panel is now driven by the mock roadmap JSON and is
+          ready to be replaced with live backend data later.
+        </div>
+      </div>
+    </div>
+  )
+}
+
 function JourneyRoadmap({
   steps,
-  activeStep,
+  currentStepIndex,
+  openedStageId,
+  onStepClick,
 }: {
   steps: JourneyStep[]
-  activeStep: number
+  currentStepIndex: number
+  openedStageId: JourneyStageId | null
+  onStepClick: (stageId: JourneyStageId) => void
 }) {
   const safeActive = Math.min(
-    Math.max(activeStep, 0),
+    Math.max(currentStepIndex, 0),
     steps.length - 1
   )
   const progress =
@@ -1230,22 +1451,17 @@ function JourneyRoadmap({
         style={{ width: `${progress}%` }}
       />
       <div className="relative flex items-start justify-between">
-        {steps.map((step, index) => {
-          const status =
-            index < safeActive
-              ? "completed"
-              : index === safeActive
-              ? "active"
-              : "locked"
-          return (
-            <RoadmapStep
-              key={step.id}
-              label={step.label}
-              status={status}
-              icon={step.icon}
-            />
-          )
-        })}
+        {steps.map((step) => (
+          <RoadmapStep
+            key={step.id}
+            label={step.label}
+            status={step.status}
+            icon={step.icon}
+            canOpen={step.canOpen}
+            isSelected={step.id === openedStageId}
+            onClick={() => onStepClick(step.id)}
+          />
+        ))}
       </div>
     </div>
   )

@@ -13,6 +13,7 @@ export default function NotificationsPage() {
   const router = useRouter()
   const [showAcceptPopup, setShowAcceptPopup] =
     useState(false)
+  const [acceptStep, setAcceptStep] = useState<1 | 2>(1)
   const [projects, setProjects] =
     useState<Project[]>(initialProjects)
   const [lastProjectId, setLastProjectId] = useState("")
@@ -149,7 +150,10 @@ export default function NotificationsPage() {
               <div className="flex justify-center pt-2">
                 <button
                   className="rounded-lg bg-[#13ec5b] px-10 py-4 font-bold text-[#102216] shadow-lg shadow-[#13ec5b]/30 transition-all active:scale-[0.98]"
-                  onClick={() => setShowAcceptPopup(true)}
+                  onClick={() => {
+                    setAcceptStep(1)
+                    setShowAcceptPopup(true)
+                  }}
                 >
                   Start Project
                 </button>
@@ -211,7 +215,10 @@ export default function NotificationsPage() {
                   <div className="mt-4 flex items-center gap-3">
                     <button
                       className="rounded bg-[#13ec5b] px-4 py-2 text-xs font-bold text-[#102216] transition-colors hover:bg-[#13ec5b]/90"
-                      onClick={() => setShowAcceptPopup(true)}
+                      onClick={() => {
+                        setAcceptStep(1)
+                        setShowAcceptPopup(true)
+                      }}
                     >
                       Accept
                     </button>
@@ -293,55 +300,101 @@ export default function NotificationsPage() {
             </div>
 
             <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-2xl">
-              <div className="mb-3 flex items-center gap-2">
-                <span className="flex h-6 w-6 items-center justify-center rounded bg-[#13ec5b]/15 text-[#13ec5b]">
-                  <span className="material-symbols-outlined text-sm">
-                    verified_user
-                  </span>
-                </span>
-                <h3 className="text-sm font-semibold text-slate-900">
-                  Privacy First
-                </h3>
-              </div>
+              {acceptStep === 1 ? (
+                <>
+                  <div className="mb-3 flex items-center gap-2">
+                    <span className="flex h-6 w-6 items-center justify-center rounded bg-[#13ec5b]/15 text-[#13ec5b]">
+                      <span className="material-symbols-outlined text-sm">
+                        verified_user
+                      </span>
+                    </span>
+                    <h3 className="text-sm font-semibold text-slate-900">
+                      Privacy First
+                    </h3>
+                  </div>
 
-              <p className="text-sm leading-relaxed text-slate-600">
-                This is your{" "}
-                <span className="font-semibold">
-                  Unique Project ID
-                </span>
-                . To ensure security, all client Personal
-                Identifiable Information (PII) is
-                automatically redacted.
-              </p>
+                  <p className="text-sm leading-relaxed text-slate-600">
+                    This is your{" "}
+                    <span className="font-semibold">
+                      Unique Project ID
+                    </span>
+                    . To ensure security, all client Personal
+                    Identifiable Information (PII) is
+                    automatically redacted.
+                  </p>
 
-              <div className="mt-6 flex items-center justify-between border-t border-slate-100 pt-4">
-                <div className="flex items-center gap-1">
-                  <span className="h-2 w-2 rounded-full bg-[#13ec5b]" />
-                  <span className="h-2 w-2 rounded-full bg-slate-200" />
-                  <span className="h-2 w-2 rounded-full bg-slate-200" />
-                </div>
-                <div className="flex items-center gap-3">
-                  <button
-                    className="text-xs font-semibold text-slate-400 hover:text-slate-600"
-                    onClick={() => setShowAcceptPopup(false)}
-                  >
-                    Back
-                  </button>
-                  <button
-                    className="rounded-full bg-[#13ec5b] px-4 py-2 text-xs font-semibold text-[#102216] shadow-sm"
-                    onClick={() => {
-                      setShowAcceptPopup(false)
-                      router.push(
-                        `/Projects/${encodeURIComponent(
-                          routeProjectId
-                        )}`
-                      )
-                    }}
-                  >
-                    Next Step
-                  </button>
-                </div>
-              </div>
+                  <div className="mt-6 flex items-center justify-between border-t border-slate-100 pt-4">
+                    <div className="flex items-center gap-1">
+                      <span className="h-2 w-2 rounded-full bg-[#13ec5b]" />
+                      <span className="h-2 w-2 rounded-full bg-slate-200" />
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <button
+                        className="text-xs font-semibold text-slate-400 hover:text-slate-600"
+                        onClick={() => setShowAcceptPopup(false)}
+                      >
+                        Back
+                      </button>
+                      <button
+                        className="rounded-full bg-[#13ec5b] px-4 py-2 text-xs font-semibold text-[#102216] shadow-sm"
+                        onClick={() => setAcceptStep(2)}
+                      >
+                        Next Step
+                      </button>
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="mb-3 flex items-center gap-2">
+                    <span className="flex h-6 w-6 items-center justify-center rounded bg-[#13ec5b]/15 text-[#13ec5b]">
+                      <span className="material-symbols-outlined text-sm">
+                        assignment
+                      </span>
+                    </span>
+                    <h3 className="text-sm font-semibold text-slate-900">
+                      Service Details
+                    </h3>
+                  </div>
+
+                  <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700">
+                    <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">
+                      Service
+                    </p>
+                    <p className="mt-2 font-semibold text-slate-900">
+                      {workload}
+                    </p>
+                  </div>
+
+                  <div className="mt-6 flex items-center justify-between border-t border-slate-100 pt-4">
+                    <div className="flex items-center gap-1">
+                      <span className="h-2 w-2 rounded-full bg-slate-200" />
+                      <span className="h-2 w-2 rounded-full bg-[#13ec5b]" />
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <button
+                        className="text-xs font-semibold text-slate-400 hover:text-slate-600"
+                        onClick={() => setAcceptStep(1)}
+                      >
+                        Back
+                      </button>
+                      <button
+                        className="rounded-full bg-[#13ec5b] px-4 py-2 text-xs font-semibold text-[#102216] shadow-sm"
+                        onClick={() => {
+                          setShowAcceptPopup(false)
+                          router.push(
+                            `/Projects/${encodeURIComponent(
+                              routeProjectId
+                            )}`
+                          )
+                        }}
+                      >
+                        Start Project
+                      </button>
+                    </div>
+                  </div>
+                </>
+              )}
             </div>
           </div>
         </div>

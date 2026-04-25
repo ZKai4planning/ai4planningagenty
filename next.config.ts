@@ -4,6 +4,7 @@ import { fileURLToPath } from "url";
 const rootDir = fileURLToPath(new URL(".", import.meta.url));
 
 const nextConfig: NextConfig = {
+  output: "standalone",
   turbopack: {
     // Force Next to use this project as the root even if parent lockfiles exist.
     root: rootDir,
