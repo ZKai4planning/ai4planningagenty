@@ -1,10 +1,11 @@
 import roadmapResponse from "@/lib/mock-journey-roadmap.json"
 
 export type JourneyStageId =
-  | "initiation"
-  | "current-processing"
-  | "validation"
-  | "final-output"
+  | "sop"
+  | "documents-briefcase"
+  | "compliance-briefcase"
+  | "drawings-briefcase"
+  | "submit-briefcase"
 
 export type JourneyStageStatus =
   | "completed"
@@ -12,16 +13,18 @@ export type JourneyStageStatus =
   | "locked"
 
 export type JourneyStageIconKey =
+  | "file-text"
   | "file-search"
-  | "cpu"
-  | "shield-check"
+  | "file-check"
+  | "ruler"
   | "flag"
 
 export type JourneyStageScreen =
-  | "eligibility-check"
-  | "current-processing"
-  | "validation"
-  | "final-output"
+  | "sop"
+  | "documents-briefcase"
+  | "compliance-briefcase"
+  | "drawings-briefcase"
+  | "submit-briefcase"
 
 export type JourneyStageApiItem = {
   id: JourneyStageId

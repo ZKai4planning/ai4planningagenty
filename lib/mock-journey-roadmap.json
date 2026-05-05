@@ -1,48 +1,60 @@
 {
   "journeyName": "Shared Journey Progress",
-  "currentStageId": "initiation",
+  "currentStageId": "sop",
   "stages": [
     {
-      "id": "initiation",
-      "label": "Initiation",
-      "iconKey": "file-search",
-      "screen": "eligibility-check",
+      "id": "sop",
+      "label": "SOP",
+      "iconKey": "file-text",
+      "screen": "sop",
       "status": "active",
       "canOpen": true,
-      "title": "Initiation Workflow",
-      "description": "Eligibility form is active for initiation.",
-      "nextStageId": "current-processing"
+      "title": "SOP",
+      "description": "Start the workflow with the SOP brief and required project details.",
+      "nextStageId": "documents-briefcase"
     },
     {
-      "id": "current-processing",
-      "label": "Current Processing",
-      "iconKey": "cpu",
-      "screen": "current-processing",
+      "id": "documents-briefcase",
+      "label": "Documents Briefcase",
+      "iconKey": "file-search",
+      "screen": "documents-briefcase",
       "status": "locked",
       "canOpen": false,
-      "title": "Current Processing",
-      "description": "Active automation and dependency tracking.",
-      "nextStageId": "validation"
+      "title": "Documents Briefcase",
+      "description": "Review and manage the collected project documents in one place.",
+      "nextStageId": "compliance-briefcase"
     },
     {
-      "id": "validation",
-      "label": "Validation",
-      "iconKey": "shield-check",
-      "screen": "validation",
+      "id": "compliance-briefcase",
+      "label": "Compliance Briefcase",
+      "iconKey": "file-check",
+      "screen": "compliance-briefcase",
       "status": "locked",
       "canOpen": false,
-      "title": "Validation",
-      "description": "QA checks, reviews, and approvals will be surfaced here."
+      "title": "Compliance Briefcase",
+      "description": "Track compliance checks, reviews, and supporting approval notes.",
+      "nextStageId": "drawings-briefcase"
     },
     {
-      "id": "final-output",
-      "label": "Final Output",
+      "id": "drawings-briefcase",
+      "label": "Drawings Briefcase",
+      "iconKey": "ruler",
+      "screen": "drawings-briefcase",
+      "status": "locked",
+      "canOpen": false,
+      "title": "Drawings Briefcase",
+      "description": "Organize the drawing set and related design artifacts for the project.",
+      "nextStageId": "submit-briefcase"
+    },
+    {
+      "id": "submit-briefcase",
+      "label": "Submit Briefcase",
       "iconKey": "flag",
-      "screen": "final-output",
+      "screen": "submit-briefcase",
       "status": "locked",
       "canOpen": false,
-      "title": "Final Output",
-      "description": "Final deliverables and handoff artifacts will be shown here."
+      "title": "Submit Briefcase from Y to Z",
+      "description": "Prepare the final briefcase package for submission from Y to Z."
     }
   ]
 }

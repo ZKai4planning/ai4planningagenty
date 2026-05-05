@@ -11,8 +11,8 @@ import {
 } from "react"
 import {
   AlertCircle,
+  Bot,
   Building2,
-  Cpu,
   Flag,
   FileSearch,
   FileText,
@@ -20,10 +20,10 @@ import {
   Lock,
   Ruler,
   CheckCircle,
-  ShieldCheck,
+  Shield,
+  Sparkles,
 } from "lucide-react"
 import ConstructionLoadingDock from "@/components/ConstructionLoadingDock"
-import AgentY from "@/components/agenty"
 import {
   advanceMockJourneyStage,
   getMockJourneyRoadmap,
@@ -45,13 +45,40 @@ type JourneyStep = JourneyStageApiItem & {
   icon: ElementType
 }
 
+type BriefcaseStageContentId = Extract<
+  JourneyStageId,
+  | "documents-briefcase"
+  | "compliance-briefcase"
+  | "drawings-briefcase"
+>
+
+type BriefcaseCardTone = "blue" | "emerald" | "amber"
+
+type BriefcaseCard = {
+  category: string
+  title: string
+  summary: string
+  details: readonly string[]
+  tone: BriefcaseCardTone
+}
+
+type BriefcaseStageContent = {
+  eyebrow: string
+  heading: string
+  description: string
+  notesTitle: string
+  notes: readonly string[]
+  cards: readonly BriefcaseCard[]
+}
+
 const JOURNEY_STAGE_ICON_MAP: Record<
   JourneyStageIconKey,
   ElementType
 > = {
+  "file-text": FileText,
   "file-search": FileSearch,
-  cpu: Cpu,
-  "shield-check": ShieldCheck,
+  "file-check": FileCheck,
+  ruler: Ruler,
   flag: Flag,
 }
 
@@ -104,7 +131,7 @@ type EligibilityProject = Project & {
   postcode?: string
 }
 
-const ELIGIBILITY_STEP_ID: JourneyStageId = "initiation"
+const ELIGIBILITY_STEP_ID: JourneyStageId = "sop"
 const PROJECT_LAST_ID_KEY = "ai4planning_last_project_id"
 const MISSING_VALUE = "Missing"
 const NOTIFICATION_STORAGE_KEY =
@@ -116,6 +143,441 @@ const MISSING_TOKENS = new Set([
   "Don't know",
   "Not sure",
 ])
+
+const SOP_AGENT_Y_CHECKLIST_SECTIONS = [
+  {
+    title: "1. Input Pack Review",
+    tone: "blue" as const,
+    items: [
+      "Confirm the packet is redacted and contains no personal data.",
+      "Review documentation status: received / missing.",
+      "Review compliance status: pass / fail / pending.",
+      "Review required drawings list and planning requirements.",
+      "Review site visit outputs and risk flags, if provided.",
+      "Route all follow-up communication through Agent X only.",
+    ],
+  },
+  {
+    title: "2. Documentation Verification",
+    tone: "emerald" as const,
+    items: [
+      "Gas Safety Certificate (CP12): check date validity.",
+      "Electrical Report (EICR): confirm satisfactory / unsatisfactory.",
+      "EPC: confirm rating E or above.",
+      "Fire Risk Assessment: check completeness.",
+      "Existing planning permissions: confirm relevance.",
+      "Management plan: review adequacy.",
+      "Fit & Proper declaration: confirm presence only.",
+      "Mark each item as Valid / Invalid / Missing / Requires Clarification.",
+    ],
+  },
+  {
+    title: "3. Compliance Analysis",
+    tone: "amber" as const,
+    items: [
+      "Fire safety: alarms, fire doors, escape routes, and emergency lighting.",
+      "Amenities: kitchen size, bathroom ratios, appliance adequacy, ventilation, and heating.",
+      "Environmental: water supply, sewage and drainage, surface water, and waste storage.",
+      "Space standards: bedroom sizes, communal space sizes, and overcrowding risk.",
+      "Record status as Pass / Fail / Partial / Unknown.",
+      "Add notes for missing evidence, non-compliant areas, upgrades, and extra surveys.",
+    ],
+  },
+  {
+    title: "4. Drawings Production",
+    tone: "blue" as const,
+    items: [
+      "Prepare existing floor plans and proposed floor plans to scale.",
+      "Prepare fire safety plan, elevations, location plan, and block/site plan.",
+      "Include sections if structural changes are proposed.",
+      "Use 1:50 or 1:100 for plans and 1:1250 for location plan.",
+      "Show dimensions, fire symbols, north arrow, scale bar, and title block.",
+      "Include red and blue planning boundaries.",
+      "Output the full drawing set, drawing index, and any missing measurement notes.",
+    ],
+  },
+  {
+    title: "5. Planning Preparation",
+    tone: "emerald" as const,
+    items: [
+      "Check whether use class change is required: C3 to C4 or Sui Generis.",
+      "Check structural changes, external alterations, roof changes, and noise impact.",
+      "Check waste and parking considerations.",
+      "Prepare planning statement and design & access statement if required.",
+      "Prepare HMO justification, amenity impact assessment, and noise assessment if applicable.",
+      "Output a planning pack ready for Agent X review with any missing items listed.",
+    ],
+  },
+  {
+    title: "6. Risk and Issue Flagging",
+    tone: "amber" as const,
+    items: [
+      "High risk: fire safety failures, substandard room sizes, missing planning permissions, EPC below Band E, drainage issues, structural concerns, overcrowding.",
+      "Medium risk: missing documents, incomplete drawings, unverified compliance items.",
+      "Low risk: minor layout inconsistencies and missing photos.",
+      "Send the risk summary to Agent X only.",
+    ],
+  },
+  {
+    title: "7. Final Pack and Handover",
+    tone: "blue" as const,
+    items: [
+      "Assemble verified documentation list, compliance summary, drawing set, planning documents, and risk assessment.",
+      "Include notes for Agent X only and exclude personal data.",
+      "Return the technical pack to Agent X for customer communication, final checks, and Newham Council submission.",
+      "Do not contact the customer directly.",
+    ],
+  },
+] as const
+
+const BRIEFCASE_STAGE_CONTENT: Record<
+  BriefcaseStageContentId,
+  BriefcaseStageContent
+> = {
+  "documents-briefcase": {
+    eyebrow: "Documentation (Redacted)",
+    heading: "Technical Documentation Review",
+    description:
+      "Each document field is represented as a card for Agent Y to review technical validity only.",
+    notesTitle: "Notes for Agent Y",
+    notes: [
+      "Review technical validity only: dates, ratings, and compliance.",
+      "Flag any invalid or expired documents.",
+      "Identify missing items requiring follow-up via Agent X.",
+    ],
+    cards: [
+      {
+        category: "Status Summary",
+        title: "Gas Safety Certificate (CP12)",
+        summary: "Received / Missing / Pending Verification",
+        details: [
+          "Status options: Received / Missing / Pending Verification.",
+          "Review the certificate date validity only.",
+          "Flag expired or invalid evidence through Agent X.",
+        ],
+        tone: "blue",
+      },
+      {
+        category: "Status Summary",
+        title: "Electrical Report (EICR)",
+        summary: "Received / Missing / Pending Verification",
+        details: [
+          "Status options: Received / Missing / Pending Verification.",
+          "Review the report for technical validity and current status.",
+          "Flag any missing or invalid document for Agent X follow-up.",
+        ],
+        tone: "blue",
+      },
+      {
+        category: "Status Summary",
+        title: "Energy Performance Certificate (EPC)",
+        summary: "Received / Missing / Pending Verification",
+        details: [
+          "Status options: Received / Missing / Pending Verification.",
+          "Check the EPC rating and confirm compliance expectations.",
+          "Flag expired, invalid, or missing evidence via Agent X.",
+        ],
+        tone: "blue",
+      },
+      {
+        category: "Status Summary",
+        title: "Fire Risk Assessment",
+        summary: "Received / Missing / Not Applicable",
+        details: [
+          "Status options: Received / Missing / Not Applicable.",
+          "Review completeness and relevance of the assessment only.",
+          "Escalate missing or incomplete evidence to Agent X.",
+        ],
+        tone: "emerald",
+      },
+      {
+        category: "Status Summary",
+        title: "Existing Planning Permissions",
+        summary: "Provided / None / Unknown",
+        details: [
+          "Status options: Provided / None / Unknown.",
+          "Check whether any planning history supplied is technically relevant.",
+          "Flag unclear or missing planning evidence for Agent X.",
+        ],
+        tone: "emerald",
+      },
+      {
+        category: "Status Summary",
+        title: "Fit & Proper Declaration",
+        summary: "Provided / Missing",
+        details: [
+          "Status options: Provided / Missing.",
+          "Confirm presence only. No personal-data review is required.",
+          "Flag missing declarations via Agent X.",
+        ],
+        tone: "emerald",
+      },
+      {
+        category: "Status Summary",
+        title: "Ownership / Lease / Mortgage Consents",
+        summary: "Provided / Missing / Not Required",
+        details: [
+          "Status options: Provided / Missing / Not Required.",
+          "Review supporting consent evidence only where applicable.",
+          "Flag missing consents or unclear evidence via Agent X.",
+        ],
+        tone: "amber",
+      },
+    ],
+  },
+  "compliance-briefcase": {
+    eyebrow: "Compliance (Redacted)",
+    heading: "Technical Compliance Review",
+    description:
+      "Each compliance field is mapped into its own review card for fire safety, amenities, environment, and space standards.",
+    notesTitle: "Compliance Notes for Agent Y",
+    notes: [
+      "Highlight any non-compliant areas.",
+      "Identify missing evidence such as photos, measurements, or certificates.",
+      "Flag high-risk issues including fire safety, drainage, and overcrowding.",
+      "Provide technical recommendations for Agent X to relay.",
+    ],
+    cards: [
+      {
+        category: "Fire Safety",
+        title: "Smoke / Heat Alarm Layout",
+        summary: "Provided / Missing / Requires Clarification",
+        details: [
+          "Status options: Provided / Missing / Requires Clarification.",
+          "Review alarm layout evidence and identify unclear locations.",
+        ],
+        tone: "amber",
+      },
+      {
+        category: "Fire Safety",
+        title: "Fire Doors (FD30)",
+        summary: "Confirmed / Unconfirmed",
+        details: [
+          "Status options: Confirmed / Unconfirmed.",
+          "Check whether FD30 fire door evidence is present and clear.",
+        ],
+        tone: "amber",
+      },
+      {
+        category: "Fire Safety",
+        title: "Escape Routes",
+        summary: "Compliant / Non-compliant / Unknown",
+        details: [
+          "Status options: Compliant / Non-compliant / Unknown.",
+          "Highlight any escape route concerns or unknown evidence gaps.",
+        ],
+        tone: "amber",
+      },
+      {
+        category: "Fire Safety",
+        title: "Emergency Lighting",
+        summary: "Required / Not Required / Evidence Missing",
+        details: [
+          "Status options: Required / Not Required / Evidence Missing.",
+          "Check whether emergency lighting evidence is needed and supplied.",
+        ],
+        tone: "amber",
+      },
+      {
+        category: "Amenities",
+        title: "Kitchen Adequacy",
+        summary: "Pass / Fail / Pending Evidence",
+        details: [
+          "Status options: Pass / Fail / Pending Evidence.",
+          "Review kitchen size, layout, and appliance adequacy.",
+        ],
+        tone: "emerald",
+      },
+      {
+        category: "Amenities",
+        title: "Bathroom Ratio",
+        summary: "Pass / Fail / Pending Evidence",
+        details: [
+          "Status options: Pass / Fail / Pending Evidence.",
+          "Review the bathroom-to-occupant ratio using supplied evidence.",
+        ],
+        tone: "emerald",
+      },
+      {
+        category: "Amenities",
+        title: "Ventilation / Heating",
+        summary: "Pass / Fail / Unknown",
+        details: [
+          "Status options: Pass / Fail / Unknown.",
+          "Check whether ventilation and heating evidence is adequate.",
+        ],
+        tone: "emerald",
+      },
+      {
+        category: "Environmental",
+        title: "Water Supply",
+        summary: "Verified / Unverified / Issues Reported",
+        details: [
+          "Status options: Verified / Unverified / Issues Reported.",
+          "Review whether the water supply evidence is technically sufficient.",
+        ],
+        tone: "blue",
+      },
+      {
+        category: "Environmental",
+        title: "Sewage / Drainage",
+        summary: "Verified / Unverified / Issues Reported",
+        details: [
+          "Status options: Verified / Unverified / Issues Reported.",
+          "Flag drainage concerns or unverified evidence for Agent X.",
+        ],
+        tone: "blue",
+      },
+      {
+        category: "Environmental",
+        title: "Surface Water Drainage",
+        summary: "Verified / Unverified / Issues Reported",
+        details: [
+          "Status options: Verified / Unverified / Issues Reported.",
+          "Highlight any missing or problematic surface water evidence.",
+        ],
+        tone: "blue",
+      },
+      {
+        category: "Environmental",
+        title: "Waste Arrangements",
+        summary: "Compliant / Non-compliant / Unknown",
+        details: [
+          "Status options: Compliant / Non-compliant / Unknown.",
+          "Review waste storage and arrangements for compliance concerns.",
+        ],
+        tone: "blue",
+      },
+      {
+        category: "Space Standards",
+        title: "Bedroom Sizes",
+        summary: "Pass / Fail / Pending Measurements",
+        details: [
+          "Status options: Pass / Fail / Pending Measurements.",
+          "Review room sizes and flag overcrowding or missing measurements.",
+        ],
+        tone: "emerald",
+      },
+      {
+        category: "Space Standards",
+        title: "Communal Space",
+        summary: "Pass / Fail / Pending Measurements",
+        details: [
+          "Status options: Pass / Fail / Pending Measurements.",
+          "Review communal space provision and missing measurement evidence.",
+        ],
+        tone: "emerald",
+      },
+    ],
+  },
+  "drawings-briefcase": {
+    eyebrow: "Drawings (Redacted)",
+    heading: "Drawing Pack Review and Production",
+    description:
+      "Each drawing requirement, input, and Agent Y task is presented as a separate review card with a view action.",
+    notesTitle: "Agent Y Drawing Tasks",
+    notes: [
+      "Produce the full technical drawing set to Newham standards.",
+      "Ensure all plans include scale bar, north arrow, dimensions, title block, and fire safety symbols.",
+      "Include red and blue boundary lines for planning.",
+      "Flag missing measurements to Agent X and prepare the drawing index for submission.",
+    ],
+    cards: [
+      {
+        category: "Required Drawing Set",
+        title: "Existing Floor Plans",
+        summary: "To scale",
+        details: [
+          "Required drawing set item: Existing floor plans.",
+          "Present at the correct scale and align with the technical pack.",
+        ],
+        tone: "blue",
+      },
+      {
+        category: "Required Drawing Set",
+        title: "Location Plan",
+        summary: "1:1250",
+        details: [
+          "Required drawing set item: Location plan at 1:1250.",
+          "Include north arrow and planning boundary information.",
+        ],
+        tone: "blue",
+      },
+      {
+        category: "Required Drawing Set",
+        title: "Block / Site Plan",
+        summary: "Required",
+        details: [
+          "Required drawing set item: Block or site plan.",
+          "Show site context and planning boundary lines clearly.",
+        ],
+        tone: "blue",
+      },
+      {
+        category: "Inputs Provided",
+        title: "Measurements",
+        summary: "Complete / Partial / Missing",
+        details: [
+          "Status options: Complete / Partial / Missing.",
+          "Flag missing measurements to Agent X before finalizing drawings.",
+        ],
+        tone: "emerald",
+      },
+      {
+        category: "Inputs Provided",
+        title: "Site Visit Data",
+        summary: "Available / Not Available",
+        details: [
+          "Status options: Available / Not Available.",
+          "Use the site visit data to support drawing accuracy where provided.",
+        ],
+        tone: "emerald",
+      },
+      {
+        category: "Inputs Provided",
+        title: "Photos",
+        summary: "Provided / Missing",
+        details: [
+          "Status options: Provided / Missing.",
+          "Flag missing photos that limit technical drawing confidence.",
+        ],
+        tone: "emerald",
+      },
+      {
+        category: "Agent Y Task",
+        title: "Technical Drawing Set",
+        summary: "Produce to Newham standards",
+        details: [
+          "Produce the full technical drawing set to Newham standards.",
+          "Keep the output consistent with the redacted planning pack.",
+        ],
+        tone: "amber",
+      },
+      {
+        category: "Agent Y Task",
+        title: "Mandatory Plan Elements",
+        summary: "Scale Bar / North Arrow / Dimensions / Title Block / Fire Symbols / Boundaries",
+        details: [
+          "Ensure every required plan element is present.",
+          "Include scale bar, north arrow, dimensions, title block, fire safety symbols, and red/blue boundaries.",
+        ],
+        tone: "amber",
+      },
+      {
+        category: "Agent Y Task",
+        title: "Drawing Index",
+        summary: "Prepare for submission pack",
+        details: [
+          "Prepare the drawing index for the submission pack.",
+          "List any missing measurements or unresolved input dependencies for Agent X.",
+        ],
+        tone: "amber",
+      },
+    ],
+  },
+}
+
+const SUBMIT_BRIEFCASE_ITEM_DELAY_MS = 3000
 
 const isMissingAnswer = (value: string) => {
   const trimmed = value.trim()
@@ -453,6 +915,16 @@ export default function ProjectDetailsPage() {
       ? journeySteps[openedJourneyStageIndex]
       : null
 
+  const nextJourneyStage = useMemo(
+    () =>
+      openedJourneyStage?.nextStageId
+        ? journeySteps.find(
+            (step) => step.id === openedJourneyStage.nextStageId
+          ) ?? null
+        : null,
+    [journeySteps, openedJourneyStage?.nextStageId]
+  )
+
   useEffect(() => {
     if (!project || typeof window === "undefined") return
     try {
@@ -487,7 +959,7 @@ export default function ProjectDetailsPage() {
       (stage) => stage.id === stageId
     )
 
-    if (!selectedStage?.canOpen) {
+    if (!selectedStage) {
       return
     }
 
@@ -635,8 +1107,7 @@ export default function ProjectDetailsPage() {
               <EligibilityCheckDetails
                 project={project as EligibilityProject}
                 isActive={
-                  openedJourneyStage?.screen ===
-                  "eligibility-check"
+                  openedJourneyStage?.screen === "sop"
                 }
                 onRunBriefcase={runAutomation}
                 onSubmitSuccess={() => {
@@ -780,7 +1251,10 @@ export default function ProjectDetailsPage() {
                               }}
                               className="rounded-full bg-emerald-600 px-4 py-2 text-xs font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-emerald-700 hover:shadow-md active:translate-y-0"
                             >
-                              Proceed to Current Processing
+                              {`Proceed to ${
+                                nextJourneyStage?.label ??
+                                "Next Stage"
+                              }`}
                             </button>
                           </div>
                         </div>
@@ -788,21 +1262,31 @@ export default function ProjectDetailsPage() {
                     )}
                   </div>
                 )}
-              <CurrentProcessingDetails
+              <BriefcaseStageDetails
+                stage={openedJourneyStage}
                 isActive={
                   openedJourneyStage?.screen ===
-                  "current-processing"
+                    "documents-briefcase" ||
+                  openedJourneyStage?.screen ===
+                    "compliance-briefcase" ||
+                  openedJourneyStage?.screen ===
+                    "drawings-briefcase"
                 }
-                title={openedJourneyStage?.title}
-                description={openedJourneyStage?.description}
+                nextStageLabel={nextJourneyStage?.label}
+                onNextStage={() => {
+                  if (openedJourneyStage?.nextStageId) {
+                    moveJourneyToStage(
+                      openedJourneyStage.nextStageId
+                    )
+                  }
+                }}
               />
-              <JourneyStagePlaceholder
+              <SubmitBriefcaseDetails
                 stage={openedJourneyStage}
-                isActive={openedJourneyStage?.screen === "validation"}
-              />
-              <JourneyStagePlaceholder
-                stage={openedJourneyStage}
-                isActive={openedJourneyStage?.screen === "final-output"}
+                isActive={
+                  openedJourneyStage?.screen ===
+                  "submit-briefcase"
+                }
               />
             </div>
           </div>
@@ -851,10 +1335,7 @@ function RoadmapStep({
     <button
       type="button"
       onClick={onClick}
-      disabled={!canOpen}
-      className={`flex min-w-[120px] flex-col items-center gap-2 ${
-        canOpen ? "cursor-pointer" : "cursor-not-allowed"
-      }`}
+      className="flex min-w-[120px] flex-col items-center gap-2 cursor-pointer"
     >
       <div
         className={`
@@ -977,8 +1458,8 @@ function EligibilityCheckDetails({
       ? "Submitted"
       : hasMissingDetails
         ? "Submit to Agent X"
-        : "Briefcase Complete"
-    : "Run Briefcase"
+        : "Checklist Complete"
+    : "Run Checklist"
 
   const handlePrimaryAction = async () => {
     if (!briefcaseCompleted) {
@@ -1069,7 +1550,6 @@ function EligibilityCheckDetails({
     questionnaire?.dimensions?.externalMaterials || MISSING_VALUE,
   ]
 
-
   const displayValue = (value: string) => {
     const missing = isMissingAnswer(value)
     if (!briefcaseCompleted && missing) {
@@ -1092,6 +1572,150 @@ function EligibilityCheckDetails({
   const lengthDisplay = displayValue(lengthValue)
   const widthDisplay = displayValue(widthValue)
   const heightDisplay = displayValue(heightValue)
+  const ownershipDisplay = displayValue(
+    questionnaire?.propertyDetails?.ownershipStatus || MISSING_VALUE
+  )
+  const contactDisplay = displayValue(
+    questionnaire?.propertyDetails?.contactEmailOrPhone || MISSING_VALUE
+  )
+  const customerName =
+    questionnaire?.propertyDetails?.applicantFullName ||
+    project.clientName ||
+    project.applicantName ||
+    "Client"
+  const serviceName =
+    project.serviceTitle || project.serviceName || "Planning Service"
+  const totalQuestionCount = sections.reduce(
+    (total, section) => total + section.items.length,
+    0
+  )
+  const answeredQuestionCount = sections.reduce(
+    (total, section) =>
+      total +
+      section.items.filter(
+        (item) => !isMissingAnswer(item.answer)
+      ).length,
+    0
+  )
+  const missingQuestionCount = totalQuestionCount - answeredQuestionCount
+  const checklistItemCount = SOP_AGENT_Y_CHECKLIST_SECTIONS.reduce(
+    (total, section) => total + section.items.length,
+    0
+  )
+  const actionSummary = !briefcaseCompleted
+    ? "Ready to run the SOP checklist review."
+    : hasMissingDetails
+    ? `${missingItems.length} items need follow-up before handoff.`
+    : "Redacted checklist is complete and ready for Agent X handoff."
+
+  return (
+    <div className="mt-5 space-y-5">
+      <div className="overflow-hidden rounded-[26px] border border-slate-200 bg-white shadow-[0_16px_40px_-34px_rgba(15,23,42,0.55)]">
+        <div className="bg-gradient-to-r from-slate-950 via-blue-950 to-indigo-900 px-5 py-5 text-white">
+          <div className="flex max-w-3xl items-start gap-3">
+              <div className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-cyan-400/15 ring-1 ring-cyan-300/30">
+                <Bot className="h-5 w-5 text-cyan-200" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-cyan-200">
+                  Agent Y SOP
+                </p>
+                <h2 className="mt-2 text-xl font-semibold text-white">
+                  Redacted SOP Checklist
+                </h2>
+                <p className="mt-3 text-sm leading-7 text-slate-100/90">
+                  Mandatory HMO Licence + Planning Permission for Newham Council.
+                  This stage is limited to Agent Y&apos;s redacted technical
+                  checklist for project{" "}
+                  <span className="font-semibold text-white">
+                    {project.id}
+                  </span>
+                  . No personal details are shown here, and all follow-ups stay
+                  routed through Agent X.
+                </p>
+              </div>
+          </div>
+
+          <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-6">
+            <SopMetricCard
+              label="Project"
+              value={project.id}
+              hint="Redacted technical packet"
+            />
+            <SopMetricCard
+              label="Scope"
+              value="HMO + Planning"
+              hint="Newham Council workflow"
+            />
+            <SopMetricCard
+              label="Sections"
+              value={`${SOP_AGENT_Y_CHECKLIST_SECTIONS.length}`}
+              hint="Checklist groups in this SOP"
+            />
+            <SopMetricCard
+              label="Checklist"
+              value={`${checklistItemCount} items`}
+              hint="Technical review points"
+            />
+            <SopMetricCard
+              label="Planning"
+              value={serviceName}
+              hint="Current project service"
+            />
+            <SopMetricCard
+              label="Status"
+              value={
+                briefcaseCompleted
+                  ? hasMissingDetails
+                    ? "Needs follow-up"
+                    : "Ready for handoff"
+                  : "Pending run"
+              }
+              hint="Agent X remains the handoff owner"
+            />
+          </div>
+        </div>
+
+        {automationLoading && (
+          <div className="border-t border-slate-200 bg-white px-5 pt-4">
+            <ConstructionLoadingDock
+              activeStep={activeAutomationStep}
+              status={
+                automationStatus === "failed"
+                  ? "failed"
+                  : "loading"
+              }
+            />
+          </div>
+        )}
+
+        <div className="border-t border-slate-200 bg-white px-4 py-4">
+          <div className="rounded-[22px] border border-blue-100 bg-blue-50/80 px-4 py-3 text-sm text-blue-900">
+            Technical Team only. Validate documents, compliance, drawings,
+            planning, and risk outputs without requesting personal details or
+            contacting the customer directly.
+          </div>
+        </div>
+
+        <div className="grid gap-4 bg-[linear-gradient(180deg,#ffffff_0%,#f8fafc_100%)] p-4 md:grid-cols-2 xl:grid-cols-3">
+          {SOP_AGENT_Y_CHECKLIST_SECTIONS.map((section) => (
+            <SopChecklistPanel
+              key={section.title}
+              title={section.title}
+              items={section.items}
+              tone={section.tone}
+            />
+          ))}
+        </div>
+      </div>
+
+      {showSubmitSuccess && (
+        <div className="rounded-[22px] border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
+          Redacted technical checklist submitted to Agent X (mock).
+        </div>
+      )}
+    </div>
+  )
 
   return (
     <div className="mt-5">
@@ -1336,7 +1960,7 @@ function EligibilityCheckDetails({
               )
             ) : (
               <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-500">
-                Run the briefcase to reveal missing details.
+                Run the checklist to reveal missing details.
               </div>
             )}
           </div>
@@ -1352,36 +1976,606 @@ function EligibilityCheckDetails({
   )
 }
 
-function CurrentProcessingDetails({
-  isActive,
-  title,
-  description,
+function SopMetricCard({
+  label,
+  value,
+  hint,
 }: {
-  isActive: boolean
-  title?: string
-  description?: string
+  label: string
+  value: string
+  hint: string
 }) {
-  if (!isActive) {
+  return (
+    <div className="rounded-2xl border border-white/15 bg-white/10 px-3.5 py-3 shadow-sm backdrop-blur">
+      <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-cyan-200">
+        {label}
+      </p>
+      <p className="mt-2 text-sm font-semibold text-white">{value}</p>
+      <p className="mt-1 text-xs text-slate-300">{hint}</p>
+    </div>
+  )
+}
+
+function SopChecklistPanel({
+  title,
+  items,
+  tone,
+}: {
+  title: string
+  items: readonly string[]
+  tone: "blue" | "emerald" | "amber"
+}) {
+  const toneClasses =
+    tone === "emerald"
+      ? {
+          card: "border-emerald-200 bg-emerald-50/70",
+          badge: "bg-emerald-100 text-emerald-700",
+          bullet: "bg-emerald-500",
+        }
+      : tone === "amber"
+      ? {
+          card: "border-amber-200 bg-amber-50/70",
+          badge: "bg-amber-100 text-amber-700",
+          bullet: "bg-amber-500",
+        }
+      : {
+          card: "border-blue-200 bg-blue-50/70",
+          badge: "bg-blue-100 text-blue-700",
+          bullet: "bg-blue-500",
+        }
+
+  return (
+    <div className={`rounded-[22px] border p-4 ${toneClasses.card}`}>
+      <div className="flex items-center justify-between gap-3">
+        <h3 className="text-sm font-semibold text-slate-950">
+          {title}
+        </h3>
+        <span
+          className={`rounded-full px-2.5 py-1 text-[10px] font-semibold ${toneClasses.badge}`}
+        >
+          {items.length} items
+        </span>
+      </div>
+
+      <div className="mt-4 space-y-2.5">
+        {items.map((item) => (
+          <div
+            key={`${title}-${item}`}
+            className="flex items-start gap-2.5 rounded-2xl border border-white/80 bg-white/90 px-3 py-2.5"
+          >
+            <span
+              className={`mt-1 h-2.5 w-2.5 shrink-0 rounded-full ${toneClasses.bullet}`}
+            />
+            <p className="text-sm leading-6 text-slate-700">
+              {item}
+            </p>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+function SopSnapshotItem({
+  label,
+  value,
+  missing,
+}: {
+  label: string
+  value: string
+  missing: boolean
+}) {
+  return (
+    <div className="rounded-2xl border border-slate-200 bg-slate-50/70 px-3 py-3">
+      <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">
+        {label}
+      </p>
+      <p
+        className={`mt-2 text-sm font-medium ${
+          missing ? "text-rose-600" : "text-slate-900"
+        }`}
+      >
+        {value}
+      </p>
+    </div>
+  )
+}
+
+function BriefcaseStageDetails({
+  stage,
+  isActive,
+  nextStageLabel,
+  onNextStage,
+}: {
+  stage: JourneyStep | null
+  isActive: boolean
+  nextStageLabel?: string
+  onNextStage: () => void
+}) {
+  const [selectedCard, setSelectedCard] =
+    useState<BriefcaseCard | null>(null)
+  const [cardReviewStatus, setCardReviewStatus] = useState<
+    Record<string, "pending" | "completed">
+  >({})
+
+  if (!isActive || !stage) {
     return null
   }
 
+  const content = BRIEFCASE_STAGE_CONTENT[
+    stage.id as BriefcaseStageContentId
+  ]
+  const StageIcon = stage.icon
+
   return (
-    <div className="mt-6">
-      <div className="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden">
-        <div className="flex items-center justify-between border-b border-slate-200 px-6 py-4">
+    <>
+      <div className="mt-6">
+        <div className="overflow-hidden rounded-[26px] border border-slate-200 bg-white shadow-[0_16px_40px_-34px_rgba(15,23,42,0.55)]">
+          <div className="bg-gradient-to-r from-slate-950 via-slate-900 to-slate-800 px-5 py-5 text-white">
+            <div className="flex max-w-3xl items-start gap-3">
+              <div className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-white/10 ring-1 ring-white/15">
+                <StageIcon className="h-5 w-5 text-cyan-200" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-cyan-200">
+                  {content.eyebrow}
+                </p>
+                <h3 className="mt-2 text-xl font-semibold text-white">
+                  {content.heading}
+                </h3>
+                <p className="mt-3 text-sm leading-7 text-slate-100/90">
+                  {content.description}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="border-t border-slate-200 bg-white px-4 py-4">
+            <div className="rounded-[22px] border border-slate-200 bg-slate-50/80 p-4">
+              <p className="text-sm font-semibold text-slate-950">
+                {content.notesTitle}
+              </p>
+              <div className="mt-3 grid gap-2">
+                {content.notes.map((note) => (
+                  <div
+                    key={note}
+                    className="flex items-start gap-2 rounded-2xl border border-white bg-white px-3 py-2.5"
+                  >
+                    <span className="mt-1 h-2.5 w-2.5 shrink-0 rounded-full bg-slate-900" />
+                    <p className="text-sm leading-6 text-slate-700">
+                      {note}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          <div className="space-y-4 bg-[linear-gradient(180deg,#ffffff_0%,#f8fafc_100%)] p-4">
+            {content.cards.map((card) => {
+              const cardKey = `${stage.id}:${card.category}:${card.title}`
+              const reviewStatus =
+                cardReviewStatus[cardKey] ?? "pending"
+
+              return (
+                <BriefcaseInfoCard
+                  key={cardKey}
+                  card={card}
+                  reviewStatus={reviewStatus}
+                  onMarkPending={() =>
+                    setCardReviewStatus((current) => ({
+                      ...current,
+                      [cardKey]: "pending",
+                    }))
+                  }
+                  onMarkCompleted={() =>
+                    setCardReviewStatus((current) => ({
+                      ...current,
+                      [cardKey]: "completed",
+                    }))
+                  }
+                  onView={() => setSelectedCard(card)}
+                />
+              )
+            })}
+          </div>
+
+          {stage.nextStageId && (
+            <div className="border-t border-slate-200 bg-white px-4 py-4">
+              <div className="flex justify-end">
+                <button
+                  type="button"
+                  onClick={onNextStage}
+                  className="rounded-full bg-emerald-600 px-4 py-2 text-xs font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-emerald-700"
+                >
+                  {`Proceed to ${
+                    nextStageLabel ?? "Next Stage"
+                  }`}
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {selectedCard && (
+        <BriefcaseViewModal
+          card={selectedCard}
+          stageLabel={stage.label}
+          onClose={() => setSelectedCard(null)}
+        />
+      )}
+    </>
+  )
+}
+
+function BriefcaseInfoCard({
+  card,
+  reviewStatus,
+  onMarkPending,
+  onMarkCompleted,
+  onView,
+}: {
+  card: BriefcaseCard
+  reviewStatus: "pending" | "completed"
+  onMarkPending: () => void
+  onMarkCompleted: () => void
+  onView: () => void
+}) {
+  const toneClasses =
+    card.tone === "emerald"
+      ? {
+          card: "border-emerald-200 bg-emerald-50/70",
+          badge: "bg-emerald-100 text-emerald-700",
+          button:
+            "border-emerald-200 text-emerald-700 hover:bg-emerald-100",
+        }
+      : card.tone === "amber"
+      ? {
+          card: "border-amber-200 bg-amber-50/70",
+          badge: "bg-amber-100 text-amber-700",
+          button:
+            "border-amber-200 text-amber-700 hover:bg-amber-100",
+        }
+      : {
+          card: "border-blue-200 bg-blue-50/70",
+          badge: "bg-blue-100 text-blue-700",
+          button:
+            "border-blue-200 text-blue-700 hover:bg-blue-100",
+        }
+
+  return (
+    <div className={`rounded-[22px] border p-4 ${toneClasses.card}`}>
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex flex-wrap items-center gap-2">
+          <span
+            className={`rounded-full px-2.5 py-1 text-[10px] font-semibold ${toneClasses.badge}`}
+          >
+            {card.category}
+          </span>
+        </div>
+        <button
+          type="button"
+          onClick={onView}
+          className={`rounded-full border px-3 py-1 text-xs font-semibold transition ${toneClasses.button}`}
+        >
+          View Document
+        </button>
+      </div>
+
+      <div className="mt-4 flex flex-wrap items-start justify-between gap-3">
+        <h4 className="text-base font-semibold text-slate-950">
+          {card.title}
+        </h4>
+        <div className="flex flex-wrap gap-2">
+          <button
+            type="button"
+            onClick={onMarkPending}
+            className={`rounded-full px-3 py-1 text-[10px] font-semibold transition ${
+              reviewStatus === "pending"
+                ? "bg-amber-500 text-white"
+                : "bg-amber-100 text-amber-700 hover:bg-amber-200"
+            }`}
+          >
+            Pending Review
+          </button>
+          <button
+            type="button"
+            onClick={onMarkCompleted}
+            className={`rounded-full px-3 py-1 text-[10px] font-semibold transition ${
+              reviewStatus === "completed"
+                ? "bg-emerald-500 text-white"
+                : "bg-emerald-100 text-emerald-700 hover:bg-emerald-200"
+            }`}
+          >
+            Review Completed
+          </button>
+          <span
+            className={`rounded-full px-2.5 py-1 text-[10px] font-semibold ${
+              reviewStatus === "completed"
+                ? "bg-emerald-100 text-emerald-700"
+                : "bg-amber-100 text-amber-700"
+            }`}
+          >
+            {reviewStatus === "completed"
+              ? "Completed"
+              : "Pending"}
+          </span>
+        </div>
+      </div>
+
+      <p className="mt-3 text-sm leading-6 text-slate-700">
+        {card.summary}
+      </p>
+    </div>
+  )
+}
+
+function BriefcaseViewModal({
+  card,
+  stageLabel,
+  onClose,
+}: {
+  card: BriefcaseCard
+  stageLabel: string
+  onClose: () => void
+}) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 px-4 py-8">
+      <div className="w-full max-w-2xl rounded-[28px] border border-slate-200 bg-white shadow-[0_30px_120px_-40px_rgba(15,23,42,0.45)]">
+        <div className="flex items-start justify-between gap-4 border-b border-slate-200 px-5 py-5">
           <div>
-            <h3 className="text-lg font-semibold text-slate-900">
-              {title || "Current Processing"}
-            </h3>
-            <p className="text-xs text-slate-500">
-              {description ||
-                "Active automation and dependency tracking."}
+            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
+              {stageLabel} Document View
+            </p>
+            <h4 className="mt-2 text-xl font-semibold text-slate-950">
+              {card.title}
+            </h4>
+            <p className="mt-2 text-sm text-slate-600">
+              {card.summary}
             </p>
           </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-full border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-600 transition hover:bg-slate-50"
+          >
+            Close
+          </button>
         </div>
-        <div className="bg-slate-100">
-          <AgentY />
+
+        <div className="space-y-3 px-5 py-5">
+          {card.details.map((detail) => (
+            <div
+              key={detail}
+              className="flex items-start gap-2 rounded-2xl border border-slate-200 bg-slate-50 px-3 py-3"
+            >
+              <span className="mt-1 h-2.5 w-2.5 shrink-0 rounded-full bg-slate-900" />
+              <p className="text-sm leading-6 text-slate-700">
+                {detail}
+              </p>
+            </div>
+          ))}
         </div>
+      </div>
+    </div>
+  )
+}
+
+function SubmitBriefcaseDetails({
+  stage,
+  isActive,
+}: {
+  stage: JourneyStep | null
+  isActive: boolean
+}) {
+  const [running, setRunning] = useState(false)
+  const [runComplete, setRunComplete] = useState(false)
+  const [submitted, setSubmitted] = useState(false)
+  const [activeStep, setActiveStep] = useState(0)
+  const [completedCardCount, setCompletedCardCount] = useState(0)
+
+  if (!isActive || !stage) {
+    return null
+  }
+
+  const finalStageIds: BriefcaseStageContentId[] = [
+    "documents-briefcase",
+    "compliance-briefcase",
+    "drawings-briefcase",
+  ]
+
+  const briefcaseSections = finalStageIds.map((id) => ({
+    id,
+    content: BRIEFCASE_STAGE_CONTENT[id],
+  }))
+  const orderedCardKeys = briefcaseSections.flatMap(
+    ({ id, content }) =>
+      content.cards.map((card) => `${id}:${card.title}`)
+  )
+  const totalCardCount = orderedCardKeys.length
+
+  const handleRunBriefcase = async () => {
+    setRunning(true)
+    setRunComplete(false)
+    setSubmitted(false)
+    setActiveStep(0)
+    setCompletedCardCount(0)
+
+    for (let index = 0; index < totalCardCount; index += 1) {
+      await new Promise((resolve) =>
+        setTimeout(resolve, SUBMIT_BRIEFCASE_ITEM_DELAY_MS)
+      )
+      setCompletedCardCount(index + 1)
+      setActiveStep(
+        Math.min(
+          3,
+          Math.floor(((index + 1) / totalCardCount) * 4)
+        )
+      )
+    }
+
+    await new Promise((resolve) => setTimeout(resolve, 300))
+
+    setRunning(false)
+    setRunComplete(true)
+  }
+
+  const handleSubmitAll = () => {
+    setSubmitted(true)
+  }
+
+  return (
+    <div className="mt-6 space-y-5">
+      <div className="overflow-hidden rounded-[26px] border border-slate-200 bg-white shadow-[0_16px_40px_-34px_rgba(15,23,42,0.55)]">
+        <div className="bg-gradient-to-r from-slate-950 via-slate-900 to-slate-800 px-5 py-5 text-white">
+          <div className="flex flex-col gap-5 xl:flex-row xl:items-start xl:justify-between">
+            <div className="flex max-w-3xl items-start gap-3">
+              <div className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-white/10 ring-1 ring-white/15">
+                <Flag className="h-5 w-5 text-cyan-200" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-cyan-200">
+                  Submit Briefcase
+                </p>
+                <h3 className="mt-2 text-xl font-semibold text-white">
+                  Final Briefcase Review for Agent X
+                </h3>
+                <p className="mt-3 text-sm leading-7 text-slate-100/90">
+                  Review all redacted briefcases together, run the final
+                  briefcase check, and then send the full package to Agent X.
+                </p>
+              </div>
+            </div>
+
+            <div className="w-full max-w-sm rounded-3xl border border-cyan-300/20 bg-white/10 p-4 shadow-sm backdrop-blur">
+              {submitted ? (
+                <div className="rounded-2xl border border-emerald-300/20 bg-emerald-500/15 px-4 py-3 text-sm text-emerald-100">
+                  All briefcase data has been submitted to Agent X.
+                </div>
+              ) : runComplete ? (
+                <div className="space-y-3">
+                  <p className="text-sm font-medium text-slate-100">
+                    Can we send to Agent X the data?
+                  </p>
+                  <button
+                    type="button"
+                    onClick={handleSubmitAll}
+                    className="rounded-full bg-emerald-600 px-4 py-2 text-xs font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-emerald-700"
+                  >
+                    Submit All
+                  </button>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => void handleRunBriefcase()}
+                  disabled={running}
+                  className={`rounded-full px-4 py-2 text-xs font-semibold text-white shadow-sm transition ${
+                    running
+                      ? "cursor-not-allowed bg-slate-400"
+                      : "bg-blue-600 hover:-translate-y-0.5 hover:bg-blue-700"
+                  }`}
+                >
+                  {running ? "Running Briefcase" : "Run Briefcase"}
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {running && (
+          <div className="border-t border-slate-200 bg-white px-5 pt-4">
+            <ConstructionLoadingDock
+              activeStep={activeStep}
+              status="loading"
+            />
+          </div>
+        )}
+
+        <div className="border-t border-slate-200 bg-white px-4 py-4">
+          <div className="rounded-[22px] border border-blue-100 bg-blue-50/80 px-4 py-3 text-sm text-blue-900">
+            Run the final briefcase check to validate Documentation,
+            Compliance, and Drawings before the Agent X handoff.
+          </div>
+        </div>
+
+        <div className="space-y-4 bg-[linear-gradient(180deg,#ffffff_0%,#f8fafc_100%)] p-4">
+          {briefcaseSections.map(({ id, content }) => (
+            <div
+              key={id}
+              className="rounded-[24px] border border-slate-200 bg-white p-4 shadow-sm"
+            >
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
+                    {content.eyebrow}
+                  </p>
+                  <h4 className="mt-2 text-lg font-semibold text-slate-950">
+                    {content.heading}
+                  </h4>
+                </div>
+                <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600">
+                  {content.cards.length} items
+                </span>
+              </div>
+
+              <div className="mt-4 space-y-2.5">
+                {content.cards.map((card) => {
+                  const cardKey = `${id}:${card.title}`
+                  const cardIndex =
+                    orderedCardKeys.indexOf(cardKey)
+                  const isChecked =
+                    runComplete || completedCardCount > cardIndex
+
+                  return (
+                    <div
+                      key={`${id}-${card.title}`}
+                      className={`flex items-center justify-between gap-3 rounded-2xl border px-3 py-3 ${
+                        isChecked
+                          ? "border-emerald-200 bg-emerald-50/80"
+                          : "border-slate-200 bg-slate-50/80"
+                      }`}
+                    >
+                      <div className="flex items-center gap-3">
+                        {isChecked ? (
+                          <CheckCircle className="h-5 w-5 text-emerald-600" />
+                        ) : (
+                          <div className="h-5 w-5 rounded-full border border-slate-300 bg-white" />
+                        )}
+                        <div>
+                          <p className="text-sm font-semibold text-slate-950">
+                            {card.title}
+                          </p>
+                          <p className="text-xs text-slate-500">
+                            {card.summary}
+                          </p>
+                        </div>
+                      </div>
+
+                      <span
+                        className={`rounded-full px-2.5 py-1 text-[10px] font-semibold ${
+                          isChecked
+                            ? "bg-emerald-100 text-emerald-700"
+                            : running
+                            ? "bg-blue-100 text-blue-700"
+                            : "bg-slate-200 text-slate-600"
+                        }`}
+                      >
+                        {isChecked
+                          ? "OK"
+                          : running
+                          ? "Checking"
+                          : "Awaiting Briefcase Run"}
+                      </span>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+          ))}
+        </div>
+
       </div>
     </div>
   )
