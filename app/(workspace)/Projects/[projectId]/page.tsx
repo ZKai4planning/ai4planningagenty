@@ -71,6 +71,15 @@ type BriefcaseStageContent = {
   cards: readonly BriefcaseCard[]
 }
 
+type AgentZResponseContent = {
+  intro: string
+  focus: string
+  confidence: "High" | "Medium"
+  checklist: readonly string[]
+  insights: readonly string[]
+  agentYNotes?: readonly string[]
+}
+
 const JOURNEY_STAGE_ICON_MAP: Record<
   JourneyStageIconKey,
   ElementType
@@ -485,27 +494,7 @@ const BRIEFCASE_STAGE_CONTENT: Record<
     cards: [
       {
         category: "Required Drawing Set",
-        title: "Existing Floor Plans",
-        summary: "To scale",
-        details: [
-          "Required drawing set item: Existing floor plans.",
-          "Present at the correct scale and align with the technical pack.",
-        ],
-        tone: "blue",
-      },
-      {
-        category: "Required Drawing Set",
-        title: "Location Plan",
-        summary: "1:1250",
-        details: [
-          "Required drawing set item: Location plan at 1:1250.",
-          "Include north arrow and planning boundary information.",
-        ],
-        tone: "blue",
-      },
-      {
-        category: "Required Drawing Set",
-        title: "Block / Site Plan",
+        title: "existing floor plan",
         summary: "Required",
         details: [
           "Required drawing set item: Block or site plan.",
@@ -513,62 +502,55 @@ const BRIEFCASE_STAGE_CONTENT: Record<
         ],
         tone: "blue",
       },
+  
+   
+
       {
         category: "Inputs Provided",
-        title: "Measurements",
+        title: "Site Visite Data",
         summary: "Complete / Partial / Missing",
         details: [
           "Status options: Complete / Partial / Missing.",
-          "Flag missing measurements to Agent X before finalizing drawings.",
+          "Use the supplied measurements to support drawing accuracy where provided.",
         ],
         tone: "emerald",
       },
       {
         category: "Inputs Provided",
-        title: "Site Visit Data",
-        summary: "Available / Not Available",
-        details: [
-          "Status options: Available / Not Available.",
-          "Use the site visit data to support drawing accuracy where provided.",
-        ],
-        tone: "emerald",
-      },
-      {
-        category: "Inputs Provided",
-        title: "Photos",
+        title: "Original Layout",
         summary: "Provided / Missing",
         details: [
           "Status options: Provided / Missing.",
-          "Flag missing photos that limit technical drawing confidence.",
+          "Flag missing original layout material that limits technical drawing confidence.",
         ],
         tone: "emerald",
       },
       {
         category: "Agent Y Task",
-        title: "Technical Drawing Set",
-        summary: "Produce to Newham standards",
+        title: "Exist Original Layout Without Walls",
+        summary: "Prepare for technical review",
         details: [
-          "Produce the full technical drawing set to Newham standards.",
+          "Prepare the existing original layout without walls.",
           "Keep the output consistent with the redacted planning pack.",
         ],
         tone: "amber",
       },
       {
         category: "Agent Y Task",
-        title: "Mandatory Plan Elements",
-        summary: "Scale Bar / North Arrow / Dimensions / Title Block / Fire Symbols / Boundaries",
+        title: "Proposed Layout 1",
+        summary: "Prepare for submission pack",
         details: [
-          "Ensure every required plan element is present.",
-          "Include scale bar, north arrow, dimensions, title block, fire safety symbols, and red/blue boundaries.",
+          "Prepare proposed layout 1 for the drawing pack.",
+          "Keep the proposal aligned with the technical briefcase requirements.",
         ],
         tone: "amber",
       },
       {
         category: "Agent Y Task",
-        title: "Drawing Index",
+        title: "Proposed Layout 2",
         summary: "Prepare for submission pack",
         details: [
-          "Prepare the drawing index for the submission pack.",
+          "Prepare proposed layout 2 for the drawing pack.",
           "List any missing measurements or unresolved input dependencies for Agent X.",
         ],
         tone: "amber",
@@ -577,7 +559,434 @@ const BRIEFCASE_STAGE_CONTENT: Record<
   },
 }
 
+const AGENT_Z_RESPONSE_CONTENT: Record<
+  string,
+  AgentZResponseContent
+> = {
+  "Gas Safety Certificate (CP12)": {
+    intro:
+      "Newham requires a valid Gas Safety Certificate where gas appliances are present. Agent Z checks date validity, engineer registration, and whether the certificate fully covers the installed appliances.",
+    focus: "Gas safety compliance",
+    confidence: "High",
+    checklist: [
+      "Certificate should usually be issued within the last 12 months.",
+      "Engineer must be Gas Safe registered.",
+      "Certificate should list the relevant gas appliances and inspection outcome.",
+    ],
+    insights: [
+      "Request CP12 upload or a gas safety inspection if the customer has not provided one.",
+      "Pause compliance progression where the certificate is missing, expired, or unclear.",
+      "Prepare a redacted summary for Agent Y once evidence is available.",
+    ],
+    agentYNotes: [
+      "Field: Gas Safety Certificate (CP12).",
+      "Redacted summary: CP12 required for Newham compliance where gas appliances exist.",
+      "Awaiting: certificate upload, gas safety inspection, or customer clarification.",
+      "Task for Y Team: validate certificate once uploaded and flag expiry or non-compliance.",
+      "Add fire and gas compliance notes to the final submission pack.",
+    ],
+  },
+  "Electrical Report (EICR)": {
+    intro:
+      "Newham requires a valid EICR for rented and HMO properties. Agent Z checks issue age, electrician accreditation, the inspection outcome, and whether remedial actions are still outstanding.",
+    focus: "Electrical safety",
+    confidence: "High",
+    checklist: [
+      "EICR should be within the last 5 years.",
+      "Outcome should clearly show whether the report is satisfactory.",
+      "Electrician accreditation and remedial notes should be present.",
+    ],
+    insights: [
+      "Request EICR upload and verify issue date, satisfactory status, and electrician accreditation.",
+      "If evidence is missing or unclear, recommend a fresh electrical inspection and hold compliance until uploaded.",
+      "Prepare the briefcase update and redacted summary for Agent Y.",
+    ],
+    agentYNotes: [
+      "Field: Electrical Report (EICR).",
+      "Redacted summary: EICR required for Newham compliance and valid for 5 years.",
+      "Awaiting: EICR upload, electrical inspection, or customer clarification.",
+      "Task for Y Team: validate the EICR once uploaded.",
+      "Flag any unsatisfactory report or C1, C2, or FI issue.",
+      "Add electrical compliance notes to the final submission pack.",
+    ],
+  },
+  "Energy Performance Certificate (EPC)": {
+    intro:
+      "Newham requires an EPC for rented properties and HMO applications. Agent Z checks whether the certificate is valid, whether the band meets the minimum standard, and whether assessor details are present.",
+    focus: "Energy performance evidence",
+    confidence: "High",
+    checklist: [
+      "EPC should remain valid within the 10-year window.",
+      "Band E or above is the minimum expected threshold.",
+      "Issue date and assessor accreditation should be visible.",
+    ],
+    insights: [
+      "Request EPC upload and verify rating, issue date, and assessor details.",
+      "If the certificate is missing or below Band E, recommend assessment or improvement steps before compliance continues.",
+      "Prepare the briefcase update and redacted summary for Agent Y.",
+    ],
+    agentYNotes: [
+      "Field: EPC Status.",
+      "Redacted summary: EPC required for Newham compliance, valid for 10 years, with minimum Band E.",
+      "Awaiting: EPC upload, EPC assessment, or customer clarification.",
+      "Task for Y Team: validate EPC once uploaded and flag any rating below Band E.",
+      "Add energy compliance notes to the final submission pack.",
+    ],
+  },
+  "Fire Risk Assessment": {
+    intro:
+      "Agent Z assessed whether the fire risk review looks complete enough to support the technical briefcase stage.",
+    focus: "Fire risk review completeness",
+    confidence: "Medium",
+    checklist: [
+      "Check that escape routes, alarms, and fire doors are addressed.",
+      "Look for dated observations and any recommended actions.",
+      "Flag incomplete or generic assessments for Agent X follow-up.",
+    ],
+    insights: [
+      "A fire risk document with no actionable findings can still be incomplete if the layout is not covered.",
+      "Missing assessor details or review dates reduce confidence.",
+      "Any open fire safety actions should be surfaced before handoff.",
+    ],
+    agentYNotes: [
+      "FRA required for Newham HMO compliance.",
+      "Awaiting:",
+      "FRA document",
+      "Fire safety photos",
+      "Assessment booking (if required)",
+      "No personal data included.",
+      "Technical Tasks for Y-Team:",
+      "Validate FRA content (risk categories, actions, assessor competence).",
+      "Flag any missing fire safety elements (doors, alarms, escape routes).",
+      "Add fire safety notes to final compliance pack.",
+      "Integrate FRA findings into fire safety plan drawings.",
+    ],
+  },
+  "Existing Planning Permissions": {
+    intro:
+      "Agent Z reviewed the planning history angle to see whether supplied permissions line up with the current technical pack.",
+    focus: "Planning history relevance",
+    confidence: "Medium",
+    checklist: [
+      "Check whether the consent relates to the same property scope.",
+      "Compare the permission description with the current proposal or layout.",
+      "Flag missing reference numbers or unclear approval dates.",
+    ],
+    insights: [
+      "Historic permissions help most when they clearly connect to the current drawings or use class context.",
+      "Unclear planning history should be escalated instead of assumed.",
+      "A planning document can be present but still not technically relevant.",
+    ],
+  },
+  "Fit & Proper Declaration": {
+    intro:
+      "Agent Z treated this as a presence-and-completeness check only, consistent with the redacted workflow.",
+    focus: "Presence check",
+    confidence: "Medium",
+    checklist: [
+      "Confirm the declaration is included in the pack.",
+      "Check that the document looks complete rather than partial.",
+      "Route any absence or ambiguity through Agent X.",
+    ],
+    insights: [
+      "This card is mainly about whether the declaration exists in the evidence set.",
+      "The briefcase flow does not need personal-data review here.",
+      "A missing declaration should stay flagged until replaced with valid evidence.",
+    ],
+  },
+  "Ownership / Lease / Mortgage Consents": {
+    intro:
+      "Agent Z reviewed whether the supporting consent evidence is sufficient for the ownership structure described in the pack.",
+    focus: "Supporting consents",
+    confidence: "Medium",
+    checklist: [
+      "Check whether consent is required for the ownership arrangement.",
+      "Verify any freeholder, lender, or lease evidence is present where applicable.",
+      "Flag unclear ownership chains or partial consent records.",
+    ],
+    insights: [
+      "Consent requirements often depend on lease terms and lender restrictions.",
+      "Partial consent evidence should not be treated as complete.",
+      "Agent X should be asked to clarify ownership obligations where the pack is ambiguous.",
+    ],
+  },
+  "Smoke / Heat Alarm Layout": {
+    intro:
+      "Agent Z checked the alarm layout response against the typical HMO expectation for interlinked detection and kitchen heat alarms.",
+    focus: "Alarm coverage",
+    confidence: "High",
+    checklist: [
+      "Check that each storey is covered by smoke detection.",
+      "Confirm a heat alarm is accounted for in the kitchen.",
+      "Flag unclear alarm positions or missing proof images.",
+    ],
+    insights: [
+      "Interlinked alarms are the clearest compliance signal in this workflow.",
+      "Kitchen coverage is often the first missing detail in partial packs.",
+      "Photos of ceilings, landings, and the kitchen usually improve certainty quickly.",
+    ],
+  },
+  "Fire Doors (FD30)": {
+    intro:
+      "Agent Z reviewed the fire door evidence with attention to FD30 suitability and clarity of proof.",
+    focus: "Fire door evidence",
+    confidence: "Medium",
+    checklist: [
+      "Check whether FD30 doors are identified where required.",
+      "Look for evidence that doors are complete and appropriate to the risk areas.",
+      "Flag unclear labeling or missing product information.",
+    ],
+    insights: [
+      "Door presence alone is weaker than proof that the doors meet the required standard.",
+      "Missing seals, closers, or product details can leave the evidence incomplete.",
+      "Agent X should request sharper evidence if the door specification is uncertain.",
+    ],
+  },
+  "Escape Routes": {
+    intro:
+      "Agent Z assessed whether the escape route response gives enough clarity on safe movement and protected egress.",
+    focus: "Means of escape",
+    confidence: "Medium",
+    checklist: [
+      "Review whether the route appears unobstructed and understandable.",
+      "Check for any obvious dead ends or weak route descriptions.",
+      "Flag gaps where plans or photos are needed to confirm the route.",
+    ],
+    insights: [
+      "Escape route concerns are high-risk issues and should not be left implicit.",
+      "Good layout evidence often matters more here than text alone.",
+      "Unknown route conditions should stay marked for follow-up.",
+    ],
+  },
+  "Emergency Lighting": {
+    intro:
+      "Agent Z reviewed the emergency lighting position to determine whether the evidence is enough for the current route and layout context.",
+    focus: "Lighting requirement check",
+    confidence: "Medium",
+    checklist: [
+      "Check whether the property layout suggests emergency lighting may be needed.",
+      "Review whether any installed lighting evidence is actually shown.",
+      "Flag uncertainty where route lighting cannot be judged from the pack.",
+    ],
+    insights: [
+      "This is often a context-sensitive check rather than a simple yes-or-no document item.",
+      "Where the route evidence is weak, emergency lighting should stay under review.",
+      "Photos and route drawings usually improve confidence most.",
+    ],
+  },
+  "Kitchen Adequacy": {
+    intro:
+      "Agent Z reviewed the kitchen response against adequacy expectations for size, layout, and shared use.",
+    focus: "Kitchen provision",
+    confidence: "Medium",
+    checklist: [
+      "Check whether the kitchen appears proportionate to occupancy.",
+      "Review appliance, worktop, and circulation evidence.",
+      "Flag missing measurements or incomplete photo coverage.",
+    ],
+    insights: [
+      "Kitchen adequacy is easier to confirm when measurements and appliance count are both present.",
+      "Shared-occupancy kitchens need stronger evidence than a simple description.",
+      "Missing dimensions should remain visible until the pack is updated.",
+    ],
+  },
+  "Bathroom Ratio": {
+    intro:
+      "Agent Z reviewed the bathroom ratio response against occupancy-based adequacy checks used in the pack.",
+    focus: "Bathroom provision",
+    confidence: "Medium",
+    checklist: [
+      "Compare the indicated bathroom count to the likely occupancy load.",
+      "Check whether toilets, showers, and baths are clearly evidenced.",
+      "Flag unclear room counts or incomplete facility descriptions.",
+    ],
+    insights: [
+      "Bathroom ratio issues often surface when occupancy and layout data are incomplete.",
+      "Room labels on drawings help this check more than narrative text alone.",
+      "Any uncertainty here should stay routed back through Agent X.",
+    ],
+  },
+  "Ventilation / Heating": {
+    intro:
+      "Agent Z reviewed whether the ventilation and heating evidence is strong enough to support the compliance briefcase.",
+    focus: "Habitable environment checks",
+    confidence: "Medium",
+    checklist: [
+      "Check for extractor, opening-window, or ventilation references where relevant.",
+      "Review whether fixed heating provision is described or shown.",
+      "Flag vague evidence or rooms with no clear servicing details.",
+    ],
+    insights: [
+      "Ventilation and heating are often under-evidenced unless room-by-room details exist.",
+      "Bathroom and kitchen extract evidence is especially useful.",
+      "Unsupported statements should be treated as pending rather than complete.",
+    ],
+  },
+  "Water Supply": {
+    intro:
+      "Newham requires a safe, continuous water supply with suitable hot and cold water to fixtures. Agent Z checks continuity, quality, and whether the evidence is strong enough for compliance review.",
+    focus: "Water supply compliance",
+    confidence: "High",
+    checklist: [
+      "Confirm potable hot and cold water provision is addressed.",
+      "Review pressure, continuity, and any boiler or tank evidence.",
+      "Treat missing, intermittent, or unclear supply as a serious compliance concern.",
+    ],
+    insights: [
+      "Request confirmation of mains or tank supply plus photos of taps, boiler, hot water system, and tank if applicable.",
+      "If water supply is missing or unreliable, escalate to repair and pause compliance progression.",
+      "If unsure, trigger a site visit or verification check before handoff.",
+    ],
+    agentYNotes: [
+      "Field: Water Supply Status.",
+      "Redacted summary: water supply must be safe, continuous, and compliant with Newham standards.",
+      "Awaiting: photos of taps, boiler, or tank; plumbing repair; or site visit verification.",
+      "Task for Y Team: validate uploaded water supply evidence.",
+      "Flag any issue affecting habitability or compliance.",
+      "Add water safety notes to the final submission pack.",
+    ],
+  },
+  "Sewage / Drainage": {
+    intro:
+      "Newham requires a safe and functional connection to an approved sewage or drainage system. Agent Z checks whether the property appears free from drainage failure, blockage, or foul waste risk.",
+    focus: "Foul drainage",
+    confidence: "High",
+    checklist: [
+      "Check for evidence of a proper sewer connection or approved private system.",
+      "Look for leaks, backflow, blockages, or non-functioning waste systems.",
+      "Treat unclear or failed drainage as a major compliance issue.",
+    ],
+    insights: [
+      "If customer evidence is missing or uncertain, request manhole, external drainage, and waste pipe photos.",
+      "Escalate active failures to plumbing or drainage repair before compliance continues.",
+      "Trigger a drainage assessment site visit if evidence remains unclear.",
+    ],
+    agentYNotes: [
+      "Field: Sewage / Drainage Status.",
+      "Redacted summary: sewage and drainage must be functional and compliant with Newham standards.",
+      "Awaiting: confirmation of mains connection, drainage photos, repair evidence, or site visit.",
+      "Task for Y Team: validate drainage evidence once uploaded.",
+      "Flag issues affecting habitability or compliance.",
+      "Add drainage compliance notes to the final submission pack.",
+    ],
+  },
+  "Surface Water Drainage": {
+    intro:
+      "Newham requires adequate surface water drainage to prevent flooding, damp, pooling, and neighbour impact. Agent Z checks whether rainwater routing appears lawful and technically sufficient.",
+    focus: "Surface water management",
+    confidence: "High",
+    checklist: [
+      "Check that runoff destination is identified or can be verified.",
+      "Review gutters, downpipes, and external drainage points.",
+      "Flag uncertainty where foul and surface systems may be mixed or illegal.",
+    ],
+    insights: [
+      "Request photos of external drainage, gutters, downpipes, and any signs of pooling.",
+      "If drainage is missing or broken, recommend repair or specialist assessment before compliance continues.",
+      "If unclear, trigger a drainage assessment site visit and keep the briefcase open.",
+    ],
+    agentYNotes: [
+      "Field: Surface Water Drainage Status.",
+      "Redacted summary: surface water drainage must meet Newham standards to avoid flooding and damp.",
+      "Awaiting: drainage photos, drainage-type confirmation, repair evidence, or site visit.",
+      "Task for Y Team: validate external drainage evidence.",
+      "Flag issues affecting surface water management or compliance.",
+      "Add drainage notes to the final submission pack.",
+    ],
+  },
+  "Waste Arrangements": {
+    intro:
+      "Newham requires adequate, secure waste storage with correct bins and clear collection access. Agent Z checks whether household waste arrangements appear suitable for occupancy and site layout.",
+    focus: "Waste storage suitability",
+    confidence: "High",
+    checklist: [
+      "Check whether storage capacity appears sufficient for the expected occupants.",
+      "Review the bin area for secure, pest-resistant, collection-ready storage.",
+      "Flag overflow risk, missing bins, or unclear access routes.",
+    ],
+    insights: [
+      "Request photos of front and rear waste areas plus bin-type confirmation.",
+      "If arrangements are missing, direct the customer to order correct bins and create secure storage before progressing.",
+      "If unclear, trigger a waste assessment site visit and keep compliance open.",
+    ],
+    agentYNotes: [
+      "Field: Existing Waste Arrangements.",
+      "Redacted summary: waste storage must meet Newham standards with correct bins, adequate capacity, and secure storage.",
+      "Awaiting: waste-area photos, bin-type confirmation, new bin ordering evidence, or site visit.",
+      "Task for Y Team: validate waste arrangements once evidence is uploaded.",
+      "Flag hygiene, pest, or compliance issues.",
+      "Add waste management notes to the final submission pack.",
+    ],
+  },
+  "Bedroom Sizes": {
+    intro:
+      "Agent Z reviewed the bedroom size response against the expected minimum-area and overcrowding checks in the pack.",
+    focus: "Room size adequacy",
+    confidence: "Medium",
+    checklist: [
+      "Check whether measurements are present and appear usable.",
+      "Compare any known sizes against the intended occupancy use.",
+      "Flag unclear ceiling or usable-floor-area constraints.",
+    ],
+    insights: [
+      "Bedroom size checks lose confidence quickly when measurements are partial.",
+      "Drawings and survey data matter more than descriptive text here.",
+      "Potential overcrowding risks should stay clearly highlighted for Agent X.",
+    ],
+  },
+  "Communal Space": {
+    intro:
+      "Agent Z reviewed the communal space response to see whether shared living provision appears proportionate to occupancy.",
+    focus: "Shared space provision",
+    confidence: "Medium",
+    checklist: [
+      "Check whether the communal area is clearly identified and measured.",
+      "Review whether it looks usable for the expected number of occupants.",
+      "Flag missing room labels, dimensions, or conflicting layout evidence.",
+    ],
+    insights: [
+      "Communal space is easier to validate when the drawings clearly label use and size.",
+      "Shared-space adequacy often interacts with bedroom count and kitchen use.",
+      "If the room function is ambiguous, the card should remain under review.",
+    ],
+  },
+}
+
 const SUBMIT_BRIEFCASE_ITEM_DELAY_MS = 3000
+
+const AGENT_Z_ENABLED_STAGE_IDS: readonly BriefcaseStageContentId[] = [
+  "documents-briefcase",
+  "compliance-briefcase",
+]
+
+const getAgentZResponseContent = (
+  card: BriefcaseCard
+): AgentZResponseContent =>
+  AGENT_Z_RESPONSE_CONTENT[card.title] ?? {
+    intro: `Agent Z reviewed ${card.title} and generated a technical response for the current briefcase stage.`,
+    focus: card.category,
+    confidence: "Medium",
+    checklist: [
+      "Review the evidence against the stated briefcase summary.",
+      "Confirm the core technical proof points are visible and current.",
+      "Route missing or unclear evidence back through Agent X.",
+    ],
+    insights: card.details,
+    agentYNotes: [
+      `Field: ${card.title}.`,
+      "Redacted summary: review the submitted evidence against the technical briefcase requirements.",
+      "Awaiting: supporting evidence, clarification, or follow-up routed through Agent X.",
+      "Task for Y Team: validate the evidence and add technical notes to the final submission pack.",
+    ],
+  }
+
+const buildAgentYTranscript = (
+  response: AgentZResponseContent
+) => {
+  const lines = (response.agentYNotes ?? []).map((item) => `- ${item}`)
+
+  return lines.join("\n")
+}
 
 const isMissingAnswer = (value: string) => {
   const trimmed = value.trim()
@@ -1083,7 +1492,7 @@ export default function ProjectDetailsPage() {
                       </p>
                     )}
                 </div>
-                <span className="inline-flex items-center rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">
+                <span className="inline-flex items-center rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700">
                   Phase:{" "}
                   {currentJourneyStage?.label ?? "Loading"}
                 </span>
@@ -1121,11 +1530,11 @@ export default function ProjectDetailsPage() {
                 openedJourneyStage?.id ===
                   ELIGIBILITY_STEP_ID && (
                   <div className="mt-6 space-y-4">
-                    <div className="rounded-2xl border border-emerald-100 bg-emerald-50 p-6 text-sm text-emerald-800 shadow-sm">
-                      <h3 className="text-base font-semibold text-emerald-900">
+                    <div className="rounded-2xl border border-blue-100 bg-blue-50 p-6 text-sm text-blue-800 shadow-sm">
+                      <h3 className="text-base font-semibold text-blue-900">
                         Awaiting Agent X Follow-up
                       </h3>
-                      <p className="mt-1 text-xs text-emerald-700">
+                      <p className="mt-1 text-xs text-blue-700">
                         You have submitted the required details
                         to Agent X. A follow-up notification
                         will appear shortly with required
@@ -1136,11 +1545,11 @@ export default function ProjectDetailsPage() {
                     {showAgentXFollowUp && (
                       <div
                         id="agent-x-followup"
-                        className="rounded-2xl border border-emerald-200 bg-white p-4 shadow-lg"
+                        className="rounded-2xl border border-blue-200 bg-white p-4 shadow-lg"
                       >
                         <div className="flex items-start justify-between gap-4">
                           <div className="flex items-start gap-3">
-                            <div className="mt-0.5 flex h-9 w-9 items-center justify-center rounded-full bg-emerald-100 text-emerald-700">
+                            <div className="mt-0.5 flex h-9 w-9 items-center justify-center rounded-full bg-blue-100 text-blue-700">
                               <AlertCircle className="h-4 w-4" />
                             </div>
                             <div>
@@ -1154,7 +1563,7 @@ export default function ProjectDetailsPage() {
                               </p>
                             </div>
                           </div>
-                          <span className="rounded-full bg-emerald-50 px-3 py-1 text-[11px] font-semibold text-emerald-700">
+                          <span className="rounded-full bg-blue-50 px-3 py-1 text-[11px] font-semibold text-blue-700">
                             NEW
                           </span>
                         </div>
@@ -1163,7 +1572,7 @@ export default function ProjectDetailsPage() {
                           <button
                             type="button"
                             onClick={() => setShowAgentXModal(true)}
-                            className="rounded-full bg-emerald-600 px-4 py-2 text-xs font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-emerald-700 hover:shadow-md active:translate-y-0"
+                            className="rounded-full bg-blue-600 px-4 py-2 text-xs font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-blue-700 hover:shadow-md active:translate-y-0"
                           >
                             Review Requirements
                           </button>
@@ -1185,7 +1594,7 @@ export default function ProjectDetailsPage() {
                             ×
                           </button>
                           <div className="flex items-start gap-3">
-                            <div className="mt-0.5 flex h-10 w-10 items-center justify-center rounded-full bg-emerald-100 text-emerald-700">
+                            <div className="mt-0.5 flex h-10 w-10 items-center justify-center rounded-full bg-blue-100 text-blue-700">
                               <AlertCircle className="h-5 w-5" />
                             </div>
                             <div>
@@ -1205,24 +1614,24 @@ export default function ProjectDetailsPage() {
                               .map((doc) => (
                                 <li
                                   key={doc}
-                                  className="flex items-center gap-2 rounded-lg border border-emerald-100 bg-emerald-50/40 px-3 py-2"
+                                  className="flex items-center gap-2 rounded-lg border border-blue-100 bg-blue-50/40 px-3 py-2"
                                 >
-                                  <CheckCircle className="h-4 w-4 text-emerald-600" />
+                                  <CheckCircle className="h-4 w-4 text-blue-600" />
                                   <span>{doc}</span>
                                 </li>
                               ))}
                             {!project?.documents?.length && (
                               <>
-                                <li className="flex items-center gap-2 rounded-lg border border-emerald-100 bg-emerald-50/40 px-3 py-2">
-                                  <CheckCircle className="h-4 w-4 text-emerald-600" />
+                                <li className="flex items-center gap-2 rounded-lg border border-blue-100 bg-blue-50/40 px-3 py-2">
+                                  <CheckCircle className="h-4 w-4 text-blue-600" />
                                   <span>Site Location Plan</span>
                                 </li>
-                                <li className="flex items-center gap-2 rounded-lg border border-emerald-100 bg-emerald-50/40 px-3 py-2">
-                                  <CheckCircle className="h-4 w-4 text-emerald-600" />
+                                <li className="flex items-center gap-2 rounded-lg border border-blue-100 bg-blue-50/40 px-3 py-2">
+                                  <CheckCircle className="h-4 w-4 text-blue-600" />
                                   <span>Block Plan</span>
                                 </li>
-                                <li className="flex items-center gap-2 rounded-lg border border-emerald-100 bg-emerald-50/40 px-3 py-2">
-                                  <CheckCircle className="h-4 w-4 text-emerald-600" />
+                                <li className="flex items-center gap-2 rounded-lg border border-blue-100 bg-blue-50/40 px-3 py-2">
+                                  <CheckCircle className="h-4 w-4 text-blue-600" />
                                   <span>CIL Form</span>
                                 </li>
                               </>
@@ -1249,7 +1658,7 @@ export default function ProjectDetailsPage() {
                                   )
                                 }
                               }}
-                              className="rounded-full bg-emerald-600 px-4 py-2 text-xs font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-emerald-700 hover:shadow-md active:translate-y-0"
+                              className="rounded-full bg-blue-600 px-4 py-2 text-xs font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-blue-700 hover:shadow-md active:translate-y-0"
                             >
                               {`Proceed to ${
                                 nextJourneyStage?.label ??
@@ -1342,12 +1751,12 @@ function RoadmapStep({
           w-10 h-10 rounded-full flex items-center justify-center border
           ${
             isCompleted
-              ? "bg-emerald-500 border-emerald-500 text-white shadow-[0_8px_20px_rgba(16,185,129,0.25)]"
+              ? "bg-blue-600 border-blue-600 text-white shadow-[0_8px_20px_rgba(37,99,235,0.25)]"
               : isActive
-              ? "border-2 border-emerald-500 text-emerald-600 bg-white shadow-[0_8px_20px_rgba(16,185,129,0.15)]"
+              ? "border-2 border-blue-600 text-blue-600 bg-white shadow-[0_8px_20px_rgba(37,99,235,0.15)]"
               : "border-slate-200 bg-slate-50 text-slate-400"
           }
-          ${isSelected ? "ring-4 ring-emerald-100" : ""}
+          ${isSelected ? "ring-4 ring-blue-100" : ""}
         `}
       >
         <StepIcon className="w-5 h-5" />
@@ -1356,9 +1765,9 @@ function RoadmapStep({
       <span
         className={`text-xs text-center ${
           isSelected || isActive
-            ? "text-emerald-600 font-semibold"
+            ? "text-blue-600 font-semibold"
             : isCompleted
-            ? "text-emerald-700"
+            ? "text-blue-700"
             : "text-slate-400"
         }`}
       >
@@ -1611,13 +2020,13 @@ function EligibilityCheckDetails({
   return (
     <div className="mt-5 space-y-5">
       <div className="overflow-hidden rounded-[26px] border border-slate-200 bg-white shadow-[0_16px_40px_-34px_rgba(15,23,42,0.55)]">
-        <div className="bg-gradient-to-r from-slate-950 via-blue-950 to-indigo-900 px-5 py-5 text-white">
+        <div className="bg-gradient-to-r from-slate-950 via-blue-950 to-slate-900 px-5 py-5 text-white">
           <div className="flex max-w-3xl items-start gap-3">
-              <div className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-cyan-400/15 ring-1 ring-cyan-300/30">
-                <Bot className="h-5 w-5 text-cyan-200" />
+              <div className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-blue-400/15 ring-1 ring-blue-300/30">
+                <Bot className="h-5 w-5 text-blue-200" />
               </div>
               <div className="min-w-0">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-cyan-200">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-blue-200">
                   Agent Y SOP
                 </p>
                 <h2 className="mt-2 text-xl font-semibold text-white">
@@ -1710,7 +2119,7 @@ function EligibilityCheckDetails({
       </div>
 
       {showSubmitSuccess && (
-        <div className="rounded-[22px] border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
+        <div className="rounded-[22px] border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-700">
           Redacted technical checklist submitted to Agent X (mock).
         </div>
       )}
@@ -1719,15 +2128,15 @@ function EligibilityCheckDetails({
 
   return (
     <div className="mt-5">
-      <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-        <div className="px-6 py-4 bg-gray-50 border-b border-gray-200">
+      <div className="overflow-hidden rounded-lg border border-slate-200 bg-white">
+        <div className="border-b border-slate-200 bg-slate-50 px-6 py-4">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
-              <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+              <h2 className="flex items-center gap-2 text-lg font-semibold text-slate-900">
                 <FileText className="w-5 h-5" />
                 Project Summary
               </h2>
-              <p className="text-sm text-gray-600 mt-1">
+              <p className="mt-1 text-sm text-slate-600">
                 Sanitized project data (safe for Agent Y)
               </p>
             </div>
@@ -1757,62 +2166,62 @@ function EligibilityCheckDetails({
 
         <div className="p-6 space-y-6">
           <div>
-            <h3 className="text-sm font-semibold text-gray-900 mb-3 flex items-center gap-2">
+            <h3 className="mb-3 flex items-center gap-2 text-sm font-semibold text-slate-900">
               <Building2 className="w-4 h-4 text-blue-600" />
               Property Overview
             </h3>
-            <div className="grid grid-cols-2 gap-4 bg-gray-50 rounded-lg p-4">
+            <div className="grid grid-cols-2 gap-4 rounded-lg bg-slate-50 p-4">
               <div>
-                <div className="text-xs text-gray-500 mb-1">
+                <div className="mb-1 text-xs text-slate-500">
                   Property Type
                 </div>
                 <div
                   className={`text-sm font-medium ${
                     propertyTypeDisplay.missing
                       ? "text-rose-600"
-                      : "text-gray-900"
+                      : "text-slate-900"
                   }`}
                 >
                   {propertyTypeDisplay.value}
                 </div>
               </div>
               <div>
-                <div className="text-xs text-gray-500 mb-1">
+                <div className="mb-1 text-xs text-slate-500">
                   Site Address
                 </div>
                 <div
                   className={`text-sm font-medium ${
                     siteAddressDisplay.missing
                       ? "text-rose-600"
-                      : "text-gray-900"
+                      : "text-slate-900"
                   }`}
                 >
                   {siteAddressDisplay.value}
                 </div>
               </div>
               <div>
-                <div className="text-xs text-gray-500 mb-1">
+                <div className="mb-1 text-xs text-slate-500">
                   Postcode
                 </div>
                 <div
                   className={`text-sm font-medium ${
                     postcodeDisplay.missing
                       ? "text-rose-600"
-                      : "text-gray-900"
+                      : "text-slate-900"
                   }`}
                 >
                   {postcodeDisplay.value}
                 </div>
               </div>
               <div>
-                <div className="text-xs text-gray-500 mb-1">
+                <div className="mb-1 text-xs text-slate-500">
                   Development Purpose
                 </div>
                 <div
                   className={`text-sm font-medium ${
                     purposeDisplay.missing
                       ? "text-rose-600"
-                      : "text-gray-900"
+                      : "text-slate-900"
                   }`}
                 >
                   {purposeDisplay.value}
@@ -1822,50 +2231,50 @@ function EligibilityCheckDetails({
           </div>
 
           <div>
-            <h3 className="text-sm font-semibold text-gray-900 mb-3 flex items-center gap-2">
+            <h3 className="mb-3 flex items-center gap-2 text-sm font-semibold text-slate-900">
               <Ruler className="w-4 h-4 text-purple-600" />
               Dimensions
             </h3>
             <div className="grid grid-cols-4 gap-4 bg-purple-50 rounded-lg p-4">
               <div>
-                <div className="text-xs text-gray-500 mb-1">Length</div>
+                <div className="mb-1 text-xs text-slate-500">Length</div>
                 <div
                   className={`text-sm font-medium ${
                     lengthDisplay.missing
                       ? "text-rose-600"
-                      : "text-gray-900"
+                      : "text-slate-900"
                   }`}
                 >
                   {lengthDisplay.value} {dimensionUnits}
                 </div>
               </div>
               <div>
-                <div className="text-xs text-gray-500 mb-1">Width</div>
+                <div className="mb-1 text-xs text-slate-500">Width</div>
                 <div
                   className={`text-sm font-medium ${
                     widthDisplay.missing
                       ? "text-rose-600"
-                      : "text-gray-900"
+                      : "text-slate-900"
                   }`}
                 >
                   {widthDisplay.value} {dimensionUnits}
                 </div>
               </div>
               <div>
-                <div className="text-xs text-gray-500 mb-1">Height</div>
+                <div className="mb-1 text-xs text-slate-500">Height</div>
                 <div
                   className={`text-sm font-medium ${
                     heightDisplay.missing
                       ? "text-rose-600"
-                      : "text-gray-900"
+                      : "text-slate-900"
                   }`}
                 >
                   {heightDisplay.value} {dimensionUnits}
                 </div>
               </div>
               <div>
-                <div className="text-xs text-gray-500 mb-1">Units</div>
-                <div className="text-sm font-medium text-gray-900 capitalize">
+                <div className="mb-1 text-xs text-slate-500">Units</div>
+                <div className="text-sm font-medium capitalize text-slate-900">
                   {dimensionUnits}
                 </div>
               </div>
@@ -1873,8 +2282,8 @@ function EligibilityCheckDetails({
           </div>
 
           <div>
-            <h3 className="text-sm font-semibold text-gray-900 mb-3 flex items-center gap-2">
-              <AlertCircle className="w-4 h-4 text-amber-600" />
+            <h3 className="mb-3 flex items-center gap-2 text-sm font-semibold text-slate-900">
+              <AlertCircle className="w-4 h-4 text-slate-600" />
               Site Constraints
             </h3>
             <ul className="space-y-2">
@@ -1884,9 +2293,9 @@ function EligibilityCheckDetails({
                   return (
                     <li
                       key={`${constraint.label}-${idx}`}
-                      className="flex items-start gap-2 text-sm text-gray-700 bg-amber-50 rounded-lg p-3"
+                      className="flex items-start gap-2 rounded-lg bg-slate-100 p-3 text-sm text-slate-700"
                     >
-                      <span className="text-amber-600 mt-0.5">•</span>
+                      <span className="mt-0.5 text-slate-600">•</span>
                       <span
                         className={missing ? "text-rose-600" : ""}
                       >
@@ -1896,7 +2305,7 @@ function EligibilityCheckDetails({
                   )
                 })
               ) : (
-                <li className="text-sm text-gray-500">
+                <li className="text-sm text-slate-500">
                   No constraints available.
                 </li>
               )}
@@ -1904,8 +2313,8 @@ function EligibilityCheckDetails({
           </div>
 
           <div>
-            <h3 className="text-sm font-semibold text-gray-900 mb-3 flex items-center gap-2">
-              <FileCheck className="w-4 h-4 text-green-600" />
+            <h3 className="mb-3 flex items-center gap-2 text-sm font-semibold text-slate-900">
+              <FileCheck className="w-4 h-4 text-blue-600" />
               Proposed Materials
             </h3>
             <div className="grid grid-cols-2 gap-2">
@@ -1915,9 +2324,9 @@ function EligibilityCheckDetails({
                   return (
                     <div
                       key={`${material}-${idx}`}
-                      className="flex items-center gap-2 text-sm text-gray-700 bg-green-50 rounded-lg px-3 py-2"
+                      className="flex items-center gap-2 rounded-lg bg-blue-50 px-3 py-2 text-sm text-slate-700"
                     >
-                      <CheckCircle className="w-4 h-4 text-green-600" />
+                      <CheckCircle className="w-4 h-4 text-blue-600" />
                       <span className={missing ? "text-rose-600" : ""}>
                         {material}
                       </span>
@@ -1925,7 +2334,7 @@ function EligibilityCheckDetails({
                   )
                 })
               ) : (
-                <div className="text-sm text-gray-500">
+                <div className="text-sm text-slate-500">
                   No materials provided.
                 </div>
               )}
@@ -1933,8 +2342,8 @@ function EligibilityCheckDetails({
           </div>
 
           <div>
-            <h3 className="text-sm font-semibold text-gray-900 mb-3 flex items-center gap-2">
-              <AlertCircle className="w-4 h-4 text-amber-600" />
+            <h3 className="mb-3 flex items-center gap-2 text-sm font-semibold text-slate-900">
+              <AlertCircle className="w-4 h-4 text-slate-600" />
               Remaining Missing Details
             </h3>
             {briefcaseCompleted ? (
@@ -1943,7 +2352,7 @@ function EligibilityCheckDetails({
                   {missingItems.map((item, idx) => (
                     <li
                       key={`${item.section}-${item.question}-${idx}`}
-                      className="flex flex-wrap items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900"
+                      className="flex flex-wrap items-start gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-900"
                     >
                       <span className="font-semibold">{item.section}:</span>
                       <span>{item.question}</span>
@@ -1954,7 +2363,7 @@ function EligibilityCheckDetails({
                   ))}
                 </ul>
               ) : (
-                <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700">
+                <div className="rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-sm text-blue-700">
                   All initiation details are complete.
                 </div>
               )
@@ -1966,7 +2375,7 @@ function EligibilityCheckDetails({
           </div>
 
           {showSubmitSuccess && (
-            <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
+            <div className="rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-700">
               Missing details submitted to Agent X (mock).
             </div>
           )}
@@ -1987,7 +2396,7 @@ function SopMetricCard({
 }) {
   return (
     <div className="rounded-2xl border border-white/15 bg-white/10 px-3.5 py-3 shadow-sm backdrop-blur">
-      <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-cyan-200">
+      <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-blue-200">
         {label}
       </p>
       <p className="mt-2 text-sm font-semibold text-white">{value}</p>
@@ -2008,15 +2417,15 @@ function SopChecklistPanel({
   const toneClasses =
     tone === "emerald"
       ? {
-          card: "border-emerald-200 bg-emerald-50/70",
-          badge: "bg-emerald-100 text-emerald-700",
-          bullet: "bg-emerald-500",
+          card: "border-slate-200 bg-slate-50/80",
+          badge: "bg-slate-200 text-slate-700",
+          bullet: "bg-slate-500",
         }
       : tone === "amber"
       ? {
-          card: "border-amber-200 bg-amber-50/70",
-          badge: "bg-amber-100 text-amber-700",
-          bullet: "bg-amber-500",
+          card: "border-blue-200 bg-blue-50/60",
+          badge: "bg-blue-100 text-blue-700",
+          bullet: "bg-blue-500",
         }
       : {
           card: "border-blue-200 bg-blue-50/70",
@@ -2094,6 +2503,8 @@ function BriefcaseStageDetails({
 }) {
   const [selectedCard, setSelectedCard] =
     useState<BriefcaseCard | null>(null)
+  const [selectedAgentZCard, setSelectedAgentZCard] =
+    useState<BriefcaseCard | null>(null)
   const [cardReviewStatus, setCardReviewStatus] = useState<
     Record<string, "pending" | "completed">
   >({})
@@ -2105,19 +2516,28 @@ function BriefcaseStageDetails({
   const content = BRIEFCASE_STAGE_CONTENT[
     stage.id as BriefcaseStageContentId
   ]
+  const showAgentZResponse = AGENT_Z_ENABLED_STAGE_IDS.includes(
+    stage.id as BriefcaseStageContentId
+  )
   const StageIcon = stage.icon
 
   return (
     <>
-      <div className="mt-6">
+      <div
+        className={`mt-6 ${
+          selectedAgentZCard
+            ? "grid gap-5 xl:grid-cols-[minmax(0,1fr)_380px] xl:items-start"
+            : ""
+        }`}
+      >
         <div className="overflow-hidden rounded-[26px] border border-slate-200 bg-white shadow-[0_16px_40px_-34px_rgba(15,23,42,0.55)]">
-          <div className="bg-gradient-to-r from-slate-950 via-slate-900 to-slate-800 px-5 py-5 text-white">
+          <div className="bg-gradient-to-r from-slate-950 via-blue-950 to-slate-900 px-5 py-5 text-white">
             <div className="flex max-w-3xl items-start gap-3">
               <div className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-white/10 ring-1 ring-white/15">
-                <StageIcon className="h-5 w-5 text-cyan-200" />
+                <StageIcon className="h-5 w-5 text-blue-200" />
               </div>
               <div className="min-w-0">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-cyan-200">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-blue-200">
                   {content.eyebrow}
                 </p>
                 <h3 className="mt-2 text-xl font-semibold text-white">
@@ -2175,6 +2595,8 @@ function BriefcaseStageDetails({
                     }))
                   }
                   onView={() => setSelectedCard(card)}
+                  showAgentZResponse={showAgentZResponse}
+                  onAgentZResponse={() => setSelectedAgentZCard(card)}
                 />
               )
             })}
@@ -2186,7 +2608,7 @@ function BriefcaseStageDetails({
                 <button
                   type="button"
                   onClick={onNextStage}
-                  className="rounded-full bg-emerald-600 px-4 py-2 text-xs font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-emerald-700"
+                  className="rounded-full bg-blue-600 px-4 py-2 text-xs font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-blue-700"
                 >
                   {`Proceed to ${
                     nextStageLabel ?? "Next Stage"
@@ -2196,6 +2618,16 @@ function BriefcaseStageDetails({
             </div>
           )}
         </div>
+
+        {selectedAgentZCard && (
+          <div className="xl:sticky xl:top-6">
+            <AgentZResponseModal
+              card={selectedAgentZCard}
+              stageLabel={stage.label}
+              onClose={() => setSelectedAgentZCard(null)}
+            />
+          </div>
+        )}
       </div>
 
       {selectedCard && (
@@ -2215,27 +2647,31 @@ function BriefcaseInfoCard({
   onMarkPending,
   onMarkCompleted,
   onView,
+  showAgentZResponse,
+  onAgentZResponse,
 }: {
   card: BriefcaseCard
   reviewStatus: "pending" | "completed"
   onMarkPending: () => void
   onMarkCompleted: () => void
   onView: () => void
+  showAgentZResponse: boolean
+  onAgentZResponse: () => void
 }) {
   const toneClasses =
     card.tone === "emerald"
       ? {
-          card: "border-emerald-200 bg-emerald-50/70",
-          badge: "bg-emerald-100 text-emerald-700",
+          card: "border-slate-200 bg-slate-50/80",
+          badge: "bg-slate-200 text-slate-700",
           button:
-            "border-emerald-200 text-emerald-700 hover:bg-emerald-100",
+            "border-slate-200 text-slate-700 hover:bg-slate-100",
         }
       : card.tone === "amber"
       ? {
-          card: "border-amber-200 bg-amber-50/70",
-          badge: "bg-amber-100 text-amber-700",
+          card: "border-blue-200 bg-blue-50/60",
+          badge: "bg-blue-100 text-blue-700",
           button:
-            "border-amber-200 text-amber-700 hover:bg-amber-100",
+            "border-blue-200 text-blue-700 hover:bg-blue-100",
         }
       : {
           card: "border-blue-200 bg-blue-50/70",
@@ -2246,35 +2682,53 @@ function BriefcaseInfoCard({
 
   return (
     <div className={`rounded-[22px] border p-4 ${toneClasses.card}`}>
-      <div className="flex items-start justify-between gap-3">
-        <div className="flex flex-wrap items-center gap-2">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex items-center gap-2">
           <span
             className={`rounded-full px-2.5 py-1 text-[10px] font-semibold ${toneClasses.badge}`}
           >
             {card.category}
           </span>
         </div>
-        <button
-          type="button"
-          onClick={onView}
-          className={`rounded-full border px-3 py-1 text-xs font-semibold transition ${toneClasses.button}`}
-        >
-          View Document
-        </button>
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            onClick={onView}
+            className={`rounded-full border px-3 py-1 text-xs font-semibold transition ${toneClasses.button}`}
+          >
+            View Document
+          </button>
+        </div>
       </div>
 
-      <div className="mt-4 flex flex-wrap items-start justify-between gap-3">
+      <div className="mt-4 space-y-3">
         <h4 className="text-base font-semibold text-slate-950">
           {card.title}
         </h4>
-        <div className="flex flex-wrap gap-2">
+        <p className="text-sm leading-6 text-slate-700">
+          {card.summary}
+        </p>
+
+        {showAgentZResponse && (
+          <div className="flex justify-center">
+            <button
+              type="button"
+              onClick={onAgentZResponse}
+              className="rounded-full border border-slate-300 bg-slate-950 px-4 py-1.5 text-xs font-semibold text-white transition hover:bg-slate-800"
+            >
+              Agent Z Response
+            </button>
+          </div>
+        )}
+
+        <div className="flex flex-wrap items-center justify-end gap-2 border-t border-white/60 pt-3">
           <button
             type="button"
             onClick={onMarkPending}
             className={`rounded-full px-3 py-1 text-[10px] font-semibold transition ${
               reviewStatus === "pending"
-                ? "bg-amber-500 text-white"
-                : "bg-amber-100 text-amber-700 hover:bg-amber-200"
+                ? "bg-yellow-400 text-yellow-950"
+                : "bg-yellow-100 text-yellow-800 hover:bg-yellow-200"
             }`}
           >
             Pending Review
@@ -2284,8 +2738,8 @@ function BriefcaseInfoCard({
             onClick={onMarkCompleted}
             className={`rounded-full px-3 py-1 text-[10px] font-semibold transition ${
               reviewStatus === "completed"
-                ? "bg-emerald-500 text-white"
-                : "bg-emerald-100 text-emerald-700 hover:bg-emerald-200"
+                ? "bg-blue-600 text-white"
+                : "bg-blue-100 text-blue-700 hover:bg-blue-200"
             }`}
           >
             Review Completed
@@ -2293,8 +2747,8 @@ function BriefcaseInfoCard({
           <span
             className={`rounded-full px-2.5 py-1 text-[10px] font-semibold ${
               reviewStatus === "completed"
-                ? "bg-emerald-100 text-emerald-700"
-                : "bg-amber-100 text-amber-700"
+                ? "bg-blue-100 text-blue-700"
+                : "bg-slate-100 text-slate-700"
             }`}
           >
             {reviewStatus === "completed"
@@ -2303,10 +2757,6 @@ function BriefcaseInfoCard({
           </span>
         </div>
       </div>
-
-      <p className="mt-3 text-sm leading-6 text-slate-700">
-        {card.summary}
-      </p>
     </div>
   )
 }
@@ -2357,6 +2807,100 @@ function BriefcaseViewModal({
             </div>
           ))}
         </div>
+      </div>
+    </div>
+  )
+}
+
+function AgentZResponseModal({
+  card,
+  stageLabel,
+  onClose,
+}: {
+  card: BriefcaseCard
+  stageLabel: string
+  onClose: () => void
+}) {
+  const response = getAgentZResponseContent(card)
+  const transcript = useMemo(
+    () => buildAgentYTranscript(response),
+    [response]
+  )
+  const [visibleCharacterCount, setVisibleCharacterCount] =
+    useState(0)
+
+  useEffect(() => {
+    setVisibleCharacterCount(0)
+
+    const timer = window.setInterval(() => {
+      setVisibleCharacterCount((current) => {
+        if (current >= transcript.length) {
+          window.clearInterval(timer)
+          return current
+        }
+
+        return current + 1
+      })
+    }, 12)
+
+    return () => window.clearInterval(timer)
+  }, [transcript])
+
+  return (
+    <div className="overflow-hidden rounded-[26px] border border-slate-800 bg-slate-950 text-white shadow-[0_20px_60px_-28px_rgba(2,6,23,0.85)]">
+      <div className="border-b border-white/10 bg-[radial-gradient(circle_at_top,_rgba(59,130,246,0.28),_transparent_45%),linear-gradient(135deg,#020617_0%,#0f172a_55%,#111827_100%)] px-4 py-4">
+        <div className="flex items-start justify-between gap-4">
+          <div className="flex items-start gap-3">
+            <div className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl border border-blue-400/20 bg-blue-500/10">
+              <Bot className="h-4 w-4 text-blue-300" />
+            </div>
+            <div>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-blue-200">
+                Agent Z Response
+              </p>
+              <h4 className="mt-2 text-lg font-semibold text-white">
+                {card.title}
+              </h4>
+              <p className="mt-1.5 text-sm leading-6 text-slate-300">
+                {stageLabel} / {response.focus}
+              </p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-full border border-white/10 px-3 py-1.5 text-xs font-semibold text-slate-200 transition hover:bg-white/10"
+          >
+            Close
+          </button>
+        </div>
+      </div>
+
+      <div className="space-y-4 px-4 py-4">
+        <div className="rounded-[22px] border border-blue-400/15 bg-slate-900/80 p-4">
+          <div className="mb-3 flex items-center gap-2">
+            <Sparkles className="h-4 w-4 text-blue-300" />
+            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-blue-200">
+              Agent Y Response
+            </p>
+          </div>
+          <pre className="whitespace-pre-wrap font-sans text-sm leading-6 text-slate-100">
+            {transcript.slice(0, visibleCharacterCount)}
+            <span className="text-blue-300">
+              {visibleCharacterCount < transcript.length ? "|" : ""}
+            </span>
+          </pre>
+        </div>
+      </div>
+
+      <div className="flex flex-wrap items-center justify-between gap-2 border-t border-white/10 bg-slate-950 px-4 py-3">
+        <div className="flex items-center gap-2 text-[11px] text-slate-400">
+          <Sparkles className="h-3.5 w-3.5 text-blue-300" />
+          <span>Powered by Agent Z - Zynapse</span>
+        </div>
+        <span className="rounded-full border border-blue-400/20 bg-blue-500/10 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-blue-200">
+          Technical Guidance
+        </span>
       </div>
     </div>
   )
@@ -2428,14 +2972,14 @@ function SubmitBriefcaseDetails({
   return (
     <div className="mt-6 space-y-5">
       <div className="overflow-hidden rounded-[26px] border border-slate-200 bg-white shadow-[0_16px_40px_-34px_rgba(15,23,42,0.55)]">
-        <div className="bg-gradient-to-r from-slate-950 via-slate-900 to-slate-800 px-5 py-5 text-white">
+        <div className="bg-gradient-to-r from-slate-950 via-blue-950 to-slate-900 px-5 py-5 text-white">
           <div className="flex flex-col gap-5 xl:flex-row xl:items-start xl:justify-between">
             <div className="flex max-w-3xl items-start gap-3">
               <div className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-white/10 ring-1 ring-white/15">
-                <Flag className="h-5 w-5 text-cyan-200" />
+                <Flag className="h-5 w-5 text-blue-200" />
               </div>
               <div className="min-w-0">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-cyan-200">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-blue-200">
                   Submit Briefcase
                 </p>
                 <h3 className="mt-2 text-xl font-semibold text-white">
@@ -2448,9 +2992,9 @@ function SubmitBriefcaseDetails({
               </div>
             </div>
 
-            <div className="w-full max-w-sm rounded-3xl border border-cyan-300/20 bg-white/10 p-4 shadow-sm backdrop-blur">
+            <div className="w-full max-w-sm rounded-3xl border border-blue-300/20 bg-white/10 p-4 shadow-sm backdrop-blur">
               {submitted ? (
-                <div className="rounded-2xl border border-emerald-300/20 bg-emerald-500/15 px-4 py-3 text-sm text-emerald-100">
+                <div className="rounded-2xl border border-blue-300/20 bg-blue-500/15 px-4 py-3 text-sm text-blue-100">
                   All briefcase data has been submitted to Agent X.
                 </div>
               ) : runComplete ? (
@@ -2461,7 +3005,7 @@ function SubmitBriefcaseDetails({
                   <button
                     type="button"
                     onClick={handleSubmitAll}
-                    className="rounded-full bg-emerald-600 px-4 py-2 text-xs font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-emerald-700"
+                    className="rounded-full bg-blue-600 px-4 py-2 text-xs font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-blue-700"
                   >
                     Submit All
                   </button>
@@ -2533,13 +3077,13 @@ function SubmitBriefcaseDetails({
                       key={`${id}-${card.title}`}
                       className={`flex items-center justify-between gap-3 rounded-2xl border px-3 py-3 ${
                         isChecked
-                          ? "border-emerald-200 bg-emerald-50/80"
+                          ? "border-blue-200 bg-blue-50/80"
                           : "border-slate-200 bg-slate-50/80"
                       }`}
                     >
                       <div className="flex items-center gap-3">
                         {isChecked ? (
-                          <CheckCircle className="h-5 w-5 text-emerald-600" />
+                          <CheckCircle className="h-5 w-5 text-blue-600" />
                         ) : (
                           <div className="h-5 w-5 rounded-full border border-slate-300 bg-white" />
                         )}
@@ -2556,7 +3100,7 @@ function SubmitBriefcaseDetails({
                       <span
                         className={`rounded-full px-2.5 py-1 text-[10px] font-semibold ${
                           isChecked
-                            ? "bg-emerald-100 text-emerald-700"
+                            ? "bg-blue-100 text-blue-700"
                             : running
                             ? "bg-blue-100 text-blue-700"
                             : "bg-slate-200 text-slate-600"
@@ -2598,7 +3142,7 @@ function JourneyStagePlaceholder({
     <div className="mt-6">
       <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
         <div className="flex items-start gap-3">
-          <div className="flex h-11 w-11 items-center justify-center rounded-full bg-emerald-50 text-emerald-600">
+          <div className="flex h-11 w-11 items-center justify-center rounded-full bg-blue-50 text-blue-600">
             <StageIcon className="h-5 w-5" />
           </div>
           <div>
@@ -2641,7 +3185,7 @@ function JourneyRoadmap({
     <div className="relative mt-6">
       <div className="absolute left-0 right-0 top-5 h-1 rounded-full bg-slate-100" />
       <div
-        className="absolute left-0 top-5 h-1 rounded-full bg-emerald-500 transition-all duration-300"
+        className="absolute left-0 top-5 h-1 rounded-full bg-blue-600 transition-all duration-300"
         style={{ width: `${progress}%` }}
       />
       <div className="relative flex items-start justify-between">
