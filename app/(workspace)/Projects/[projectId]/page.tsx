@@ -54,12 +54,20 @@ type BriefcaseStageContentId = Extract<
 
 type BriefcaseCardTone = "blue" | "emerald" | "amber"
 
+type BriefcaseDocument = {
+  fileName: string
+  publicPath?: string
+  previewTextPath?: string
+  type: "pdf" | "docx"
+}
+
 type BriefcaseCard = {
   category: string
   title: string
   summary: string
   details: readonly string[]
   tone: BriefcaseCardTone
+  document?: BriefcaseDocument
 }
 
 type BriefcaseStageContent = {
@@ -494,66 +502,78 @@ const BRIEFCASE_STAGE_CONTENT: Record<
     cards: [
       {
         category: "Required Drawing Set",
-        title: "existing floor plan",
-        summary: "Required",
+        title: "Original Site Layout",
+        summary: "Provided / Missing",
         details: [
-          "Required drawing set item: Block or site plan.",
-          "Show site context and planning boundary lines clearly.",
+          "Status options: Provided / Missing.",
+          "Use the original site layout as the base reference for the drawing pack.",
         ],
         tone: "blue",
+        document: {
+          fileName: "AI4P SURVEY (1).pdf",
+          publicPath: "/briefcase-documents/floor-plan-survey.pdf",
+          type: "pdf",
+        },
       },
-  
-   
-
       {
         category: "Inputs Provided",
         title: "Site Visite Data",
         summary: "Complete / Partial / Missing",
-        details: [
-          "Status options: Complete / Partial / Missing.",
-          "Use the supplied measurements to support drawing accuracy where provided.",
-        ],
+        details: [],
         tone: "emerald",
+        document: {
+          fileName:
+            "Wolseley Avenue E6 - HMO Survey Crib Sheet v3.docx",
+          publicPath: "/briefcase-documents/site-visite-data-crib.docx",
+          previewTextPath:
+            "/briefcase-documents/site-visite-data-crib.txt",
+          type: "docx",
+        },
       },
       {
         category: "Inputs Provided",
         title: "Original Layout",
-        summary: "Provided / Missing",
+        summary: "Converted to CAD",
         details: [
           "Status options: Provided / Missing.",
           "Flag missing original layout material that limits technical drawing confidence.",
         ],
         tone: "emerald",
-      },
-      {
-        category: "Agent Y Task",
-        title: "Exist Original Layout Without Walls",
-        summary: "Prepare for technical review",
-        details: [
-          "Prepare the existing original layout without walls.",
-          "Keep the output consistent with the redacted planning pack.",
-        ],
-        tone: "amber",
+        document: {
+          fileName:
+            "ORIGINAL LAYOUT-NEW WALLS 21.04.26 (1).pdf",
+          publicPath:
+            "/briefcase-documents/original-layout-new-walls.pdf",
+          type: "pdf",
+        },
       },
       {
         category: "Agent Y Task",
         title: "Proposed Layout 1",
-        summary: "Prepare for submission pack",
+        summary: "Converted to CAD",
         details: [
           "Prepare proposed layout 1 for the drawing pack.",
           "Keep the proposal aligned with the technical briefcase requirements.",
         ],
         tone: "amber",
+        document: {
+          fileName: "PROPOSED LAYOUT V5.pdf",
+          publicPath: "/briefcase-documents/proposed-layout-1.pdf",
+          type: "pdf",
+        },
       },
       {
         category: "Agent Y Task",
         title: "Proposed Layout 2",
-        summary: "Prepare for submission pack",
-        details: [
-          "Prepare proposed layout 2 for the drawing pack.",
-          "List any missing measurements or unresolved input dependencies for Agent X.",
-        ],
+        summary: "Final Submission",
+        details: [],
         tone: "amber",
+        document: {
+          fileName:
+            "PROPOSED LAYOUT 21.04.26 (1) (1).pdf",
+          publicPath: "/briefcase-documents/proposed-layout-2.pdf",
+          type: "pdf",
+        },
       },
     ],
   },
@@ -2770,9 +2790,48 @@ function BriefcaseViewModal({
   stageLabel: string
   onClose: () => void
 }) {
+  const [documentPreviewText, setDocumentPreviewText] =
+    useState<string>("")
+  const documentPreviewBlocks = useMemo(
+    () =>
+      documentPreviewText
+        .split(/\r?\n\s*\r?\n/)
+        .map((block) => block.trim())
+        .filter(Boolean),
+    [documentPreviewText]
+  )
+
+  useEffect(() => {
+    let cancelled = false
+
+    if (!card.document?.previewTextPath) {
+      setDocumentPreviewText("")
+      return
+    }
+
+    setDocumentPreviewText("")
+
+    void fetch(card.document.previewTextPath)
+      .then((response) => response.text())
+      .then((text) => {
+        if (!cancelled) {
+          setDocumentPreviewText(text)
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setDocumentPreviewText("Preview unavailable.")
+        }
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [card])
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 px-4 py-8">
-      <div className="w-full max-w-2xl rounded-[28px] border border-slate-200 bg-white shadow-[0_30px_120px_-40px_rgba(15,23,42,0.45)]">
+      <div className="w-full max-w-4xl rounded-[28px] border border-slate-200 bg-white shadow-[0_30px_120px_-40px_rgba(15,23,42,0.45)]">
         <div className="flex items-start justify-between gap-4 border-b border-slate-200 px-5 py-5">
           <div>
             <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
@@ -2784,6 +2843,11 @@ function BriefcaseViewModal({
             <p className="mt-2 text-sm text-slate-600">
               {card.summary}
             </p>
+            {card.document && (
+              <p className="mt-2 text-xs font-medium text-blue-700">
+                {card.document.fileName}
+              </p>
+            )}
           </div>
           <button
             type="button"
@@ -2794,18 +2858,89 @@ function BriefcaseViewModal({
           </button>
         </div>
 
-        <div className="space-y-3 px-5 py-5">
-          {card.details.map((detail) => (
-            <div
-              key={detail}
-              className="flex items-start gap-2 rounded-2xl border border-slate-200 bg-slate-50 px-3 py-3"
-            >
-              <span className="mt-1 h-2.5 w-2.5 shrink-0 rounded-full bg-slate-900" />
-              <p className="text-sm leading-6 text-slate-700">
-                {detail}
+        <div className="grid gap-5 px-5 py-5 lg:grid-cols-[1.4fr_0.9fr]">
+          <div className="rounded-[24px] border border-slate-200 bg-slate-50 p-3">
+            {card.document?.type === "pdf" && card.document.publicPath ? (
+              <iframe
+                src={`${card.document.publicPath}#toolbar=0`}
+                title={`${card.title} preview`}
+                className="h-[560px] w-full rounded-[18px] border border-slate-200 bg-white"
+              />
+            ) : card.document?.type === "docx" ? (
+              <div className="h-[560px] overflow-y-auto rounded-[18px] border border-slate-200 bg-white p-4">
+                {documentPreviewText ? (
+                  <div className="space-y-4">
+                    {documentPreviewBlocks.map((block, index) => {
+                      const isHeading =
+                        block.length < 90 &&
+                        (block === block.toUpperCase() ||
+                          block.startsWith("PAGE ") ||
+                          /^\d+\./.test(block))
+
+                      return (
+                        <div
+                          key={`${index}-${block.slice(0, 24)}`}
+                          className={
+                            isHeading
+                              ? "border-b border-slate-200 pb-2 text-sm font-semibold uppercase tracking-[0.08em] text-slate-900"
+                              : "whitespace-pre-wrap text-sm leading-6 text-slate-700"
+                          }
+                        >
+                          {block}
+                        </div>
+                      )
+                    })}
+                  </div>
+                ) : (
+                  <p className="text-sm text-slate-500">
+                    Loading preview...
+                  </p>
+                )}
+              </div>
+            ) : (
+              <div className="flex h-[280px] items-center justify-center rounded-[18px] border border-dashed border-slate-300 bg-white px-6 text-center text-sm text-slate-500">
+                Preview not available for this field yet.
+              </div>
+            )}
+          </div>
+
+          <div className="space-y-3">
+            <div className="rounded-[24px] border border-slate-200 bg-white p-4">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
+                Document Notes
               </p>
+              <div className="mt-3 space-y-3">
+                {card.details.length > 0 ? (
+                  card.details.map((detail) => (
+                    <div
+                      key={detail}
+                      className="flex items-start gap-2 rounded-2xl border border-slate-200 bg-slate-50 px-3 py-3"
+                    >
+                      <span className="mt-1 h-2.5 w-2.5 shrink-0 rounded-full bg-slate-900" />
+                      <p className="text-sm leading-6 text-slate-700">
+                        {detail}
+                      </p>
+                    </div>
+                  ))
+                ) : (
+                  <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-3 py-4 text-sm text-slate-500">
+                    No document notes for this file.
+                  </div>
+                )}
+              </div>
             </div>
-          ))}
+
+            {card.document?.publicPath && (
+              <a
+                href={card.document.publicPath}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex rounded-full border border-blue-200 bg-blue-50 px-4 py-2 text-xs font-semibold text-blue-700 transition hover:bg-blue-100"
+              >
+                Open Full Document
+              </a>
+            )}
+          </div>
         </div>
       </div>
     </div>
