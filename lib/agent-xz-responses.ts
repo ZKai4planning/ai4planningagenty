@@ -1,0 +1,269 @@
+﻿export type AgentResponseEntry = {
+  field: string
+  agent: "Agent Z" | "Agent X"
+  text: string
+}
+
+export const AGENT_XZ_RESPONSES: AgentResponseEntry[] = [
+    {
+        "field":  "Property Type",
+        "agent":  "Agent Z",
+        "text":  "🤖 Agent Z Smart Response (Conversational)\n“No problem, I can help you identify this 👍\nA terraced house is part of a row of similar houses sharing side walls.A semi-detached house is attached to one other house.A detached house stands alone.A flat or maisonette is part of a building with shared or separate access.\nTo help you better, could you tell me:👉 Does your property share walls with neighbours on one or both sides?”\nIf user says:\n“Both sides” → Suggest: Terraced\n“One side” → Suggest: Semi-detached\n“No sides” → Suggest: Detached\n“Inside a building” → Suggest: Flat\n🤖 Final Confirmation\n“Based on your answer, this appears to be a [Suggested Type].Would you like me to select this for you?”\n✔ Yes → Auto-fill✔ No → Let user choose manually"
+    },
+    {
+        "field":  "Property Type",
+        "agent":  "Agent X",
+        "text":  "AGENT X (ACTION LAYER)\nProperty Type: Terraced (Confidence: High / Medium if guided)Actions:✔ Proceed with standard HMO workflow✔ Assume shared walls → consider neighbour impact (planning)✔ Prioritise fire escape compliance (mid-terrace risk)✔ Check extension constraints (rear only likely)\nIf selected via “Unsure”:\nFlag: Property Type AI-InferredAction: Verify during document review or floor plan stage"
+    },
+    {
+        "field":  "Ownership status",
+        "agent":  "Agent Z",
+        "text":  "🤖 Agent Z Smart Response (Conversational)\n“No worries, I’ll help you figure this out 👍\nIf you own the property and the land it stands on, you are a freeholder.If you own the property but not the land (usually in flats), you are a leaseholder.If the property is owned by a company, select company-owned.If you’re renting or managing on behalf of someone else, select tenant or acting on behalf of owner.\n👉 Do you own the property yourself?”\nGuided Follow-up Logic\n“Yes, and I own the land” → Freehold\n“Yes, but not the land” → Leasehold\n“No, I manage it” → Acting on behalf\n“I rent it” → Tenant\n“Owned via company” → Company-owned\n🤖 Final Confirmation\n“Based on your answer, this appears to be [Ownership Type].Shall I select this for you?”\n✔ Yes → Auto-fill✔ No → Manual selection"
+    },
+    {
+        "field":  "Ownership status",
+        "agent":  "Agent X",
+        "text":  "AGENT X (ACTION LAYER)\nExample Output:\nOwnership: LeaseholdConfidence: HighActions:✔ Request Freeholder Consent✔ Check lease restrictions (HMO allowed?)✔ Flag legal dependency before submission✔ Do not proceed to submission without consent\nIf “Unsure” (AI-assisted):\nOwnership: Likely Leasehold (AI Inferred)Confidence: MediumAction:✔ Verify via title deed / land registry✔ Request documentation from client\nIf Tenant:\nOwnership: TenantActions:❌ Cannot proceed independently✔ Request landlord authorization✔ Pause workflow until approval"
+    },
+    {
+        "field":  "Are you planning any building works ?",
+        "agent":  "Agent Z",
+        "text":  "🤖 Agent Z Smart Response (Conversational)\n“That’s absolutely fine, I’ll help you understand 👍\nBuilding works include any physical changes to your property such as:• Extending the property (rear or side)• Converting loft or garage• Moving or removing walls• Adding bedrooms or bathrooms\n👉 Are you planning to change the layout or size of the property in any way?”\nGuided Follow-up Logic\n“Yes, changing layout” → Internal changes\n“Extending house” → Rear extension\n“Using loft” → Loft conversion\n“Just adding bathroom” → Internal + plumbing\n“No changes” → No works\n🤖 Final Confirmation\n“Based on your answer, this appears to be [Type of Work].Would you like me to select this for you?”\n✔ Yes → Auto-fill✔ No → Manual selection\nSpecific Triggers:\nRear extension → Planning / Permitted Development check\nLoft conversion → Fire safety + escape route impact\nInternal changes → HMO layout compliance check\nAdditional bathroom → Licensing improvement\n💡 AGENT Z SMART INSIGHT\nExample: Rear Extension\n“A rear extension may require planning permission or fall under permitted development. We’ll assess this based on your property and location.”\nExample: Internal Changes\n“Internal layout changes can affect HMO compliance, especially room sizes and fire safety. We’ll review this for you.”\nExample: No Changes\n“That’s helpful — we’ll assess your existing layout for HMO suitability without structural changes.”"
+    },
+    {
+        "field":  "Are you planning any building works ?",
+        "agent":  "Agent X",
+        "text":  "👩‍💼 AGENT X (ACTION LAYER)\nExample Output:"
+    },
+    {
+        "field":  "If No Works",
+        "agent":  "Agent Z",
+        "text":  "🤖 Agent Z Smart Response (Conversational)\n“That’s quite common — I can help 👍\nA property is considered extended if any additional space has been added beyond the original structure, such as:• A rear or side extension• A loft conversion with dormer• A conservatory• Any structural addition visible from outside\n👉 Does your property have any extra built space compared to neighbouring houses or its original layout?”\n🧠 Guided Follow-up Logic\n“Yes, at the back” → Rear extension\n“Yes, roof changed” → Loft conversion\n“Looks bigger than neighbours” → Likely extended\n“No change” → No extension\n🤖 Final Confirmation\n“Based on your answer, this appears to be [Extension Type].Would you like me to select this?”\n✔ Yes → Auto-fill✔ No → Manual selection"
+    },
+    {
+        "field":  "If No Works",
+        "agent":  "Agent X",
+        "text":  "AGENT X (ACTION LAYER)\nExample Output:\nPrevious Extensions: Rear ExtensionActions:✔ Trigger Planning Constraint Review✔ Check permitted development limits✔ Request existing + proposed drawings✔ Compare with neighbouring properties✔ Flag moderate planning risk\nIf Multiple Extensions:\nPrevious Extensions: MultipleActions:🔴 High Planning Sensitivity✔ Full planning route likely✔ Detailed drawings required✔ Escalate for expert review\nIf “Not Sure”:\nPrevious Extensions: UnknownActions:✔ Request site photos / floor plans✔ Verify via council records if needed✔ Keep planning status open"
+    },
+    {
+        "field":  "High Risk Case",
+        "agent":  "Agent Z",
+        "text":  "🤖 Agent Z Smart Response (Conversational)\n“No problem, I’ll help clarify 👍\nIn an HMO:• Shared facilities mean tenants use the same kitchen or bathroom• Self-contained units mean each tenant has their own kitchen and bathroom\n👉 Will your tenants have their own private kitchen and bathroom, or will they share these facilities?”\nGuided Follow-up Logic\n“Sharing everything” → Shared HMO\n“Private bathrooms only” → Ensuite HMO\n“Everything separate” → Self-contained (not typical C4)\n“Not sure” → Keep open\n🤖 Final Confirmation\n“Based on your answer, this appears to be [Facility Type].Shall I select this for you?”\n✔ Yes → Auto-fill✔ No → Manual selection"
+    },
+    {
+        "field":  "High Risk Case",
+        "agent":  "Agent X",
+        "text":  "AGENT X (ACTION LAYER)\nShared Facilities:\nFacility Type: Shared Kitchen + BathroomActions:✔ Confirm HMO classification✔ Trigger licensing workflow✔ Apply standard HMO room + kitchen ratios✔ Proceed with compliance checks\nEnsuite Model:\nFacility Type: Shared Kitchen + Private BathroomsActions:✔ Maintain HMO classification✔ Adjust bathroom ratio requirements✔ Highlight premium layout (better approval chance)\nSelf-contained:\nFacility Type: Fully Self-containedActions:⚠ Not standard C4 HMO✔ Trigger planning review (possible Sui Generis / flats)✔ Escalate for planning strategy\nNot Sure:\nFacility Type: UnknownActions:✔ Clarify during consultation✔ Request layout or floor plan✔ Keep classification open"
+    },
+    {
+        "field":  "Self-contained Example",
+        "agent":  "Agent Z",
+        "text":  "🤖 Agent Z Smart Response (Conversational)\n“No problem, I’ll help clarify 👍\nThis is a key trigger for HMO classification and licensing intent. It helps confirm whether the property operates as a true HMO (room-by-room letting) versus a single tenancy\nRenting rooms individually means each tenant has their own agreement and rents a separate room.\nLetting the property as a whole means one household (family or group) rents the entire property under a single agreement.\n👉 Will your tenants have separate rental agreements for individual rooms?”\nGuided Follow-up Logic\n“Yes, separate tenants” → Individual letting (HMO)\n“One family/group” → Single let (non-HMO)\n“Some rooms separate” → Mixed model\n“Not sure” → Keep open\n🤖 Final Confirmation\n“Based on your answer, this appears to be [Letting Type].Would you like me to select this for you?”\n✔ Yes → Auto-fill✔ No → Manual selection"
+    },
+    {
+        "field":  "Self-contained Example",
+        "agent":  "Agent X",
+        "text":  "AGENT X (ACTION LAYER)\nIndividual Letting:\nLetting Type: Individual RoomsActions:✔ Confirm HMO classification✔ Trigger licensing workflow✔ Apply room-level compliance checks✔ Validate occupancy vs room sizes\nWhole Property:\nLetting Type: Single TenancyActions:✔ No HMO licence (initial assumption)✔ Verify number of occupants✔ Check if planning still required (if works involved)\nMixed:\nLetting Type: MixedActions:⚠ Requires classification review✔ Likely HMO → confirm structure✔ Request tenancy details✔ Escalate for compliance check\nNot Sure:\nLetting Type: UnknownActions:✔ Clarify during consultation✔ Explain HMO implications✔ Keep classification open"
+    },
+    {
+        "field":  "Mixed",
+        "agent":  "Agent Z",
+        "text":  "🤖 Agent Z Smart Response (Conversational)\n“No problem, I’ll help clarify 👍\nA communal kitchen is a shared space where all or multiple tenants prepare and cook food.\nIf each room has its own private kitchen, then it’s not communal and may be considered self-contained units instead.\n👉 Do your tenants use one shared kitchen, or does each have their own cooking space?”\n🧠 Guided Follow-up Logic\n“Everyone shares one kitchen” → Single communal kitchen\n“There are 2 kitchens” → Multiple communal kitchens\n“Each room has its own kitchen” → No communal kitchen\n“Not sure” → Keep open\n🤖 Final Confirmation\n“Based on your answer, this appears to be [Kitchen Type].Shall I select this for you?”\n✔ Yes → Auto-fill✔ No → Manual selection"
+    },
+    {
+        "field":  "Mixed",
+        "agent":  "Agent X",
+        "text":  "AGENT X (ACTION LAYER)\nSingle Kitchen:\nKitchen Type: Single CommunalActions:✔ Trigger kitchen adequacy check✔ Validate occupants vs kitchen size✔ Ensure appliance standards met✔ Proceed with standard HMO compliance\nMultiple Kitchens:\nKitchen Type: Multiple CommunalActions:✔ Distribute occupants across kitchens✔ Improve compliance rating✔ Potential for higher occupancy approval\nNo Communal Kitchen:\nKitchen Type: NoneActions:⚠ Non-standard HMO✔ Trigger planning classification review✔ Possible self-contained unit model✔ Escalate to planning strategy\nNot Sure:\nKitchen Type: UnknownActions:✔ Request floor plan or photos✔ Clarify during consultation✔ Keep classification open"
+    },
+    {
+        "field":  "Mixed",
+        "agent":  "Agent Z",
+        "text":  "🤖 Agent Z Smart Response (Conversational)\n“No problem, I’ll help you with dimensions 👍\nRecommended Action: Book a Site Measurement Survey\nBecause accurate dimensions are required for:\nFloor plans\nHMO compliance\nKitchen adequacy checks\nPlanning drawings\nOccupancy calculations\nStandard Survey Cost (London \u0026 Surrounding Areas)\nLondon Zones 1–4: £180 – £250\nGreater London / M25 Ring: £220 – £300\nHome Counties (Essex, Kent, Surrey, Herts, Berkshire): £250 – £350\n(Prices vary based on property size and travel distance.)\nCustomer Instruction Message\n“To proceed accurately, we need verified measurements of your property. Please book a professional site visit and measured survey. This ensures your drawings, compliance checks, and planning documents are correct.”\nZynapsis Button\n“Book My Site Survey”\nTriggers:\nCalendar availability\nPayment link\nSurveyor assignment"
+    },
+    {
+        "field":  "FIELD: Wall Materials",
+        "agent":  "Agent Z",
+        "text":  "🤖 Agent Z Smart Response (Conversational)\n“That’s absolutely fine — I can guide you 👍\nThe type of wall you choose is important for fire safety, sound insulation, and HMO compliance.\n• Brick/Block walls → Strong and durable, but less flexible• Stud walls (plasterboard) → Common for internal layouts, quicker to install• Fire-rated walls → Required in HMOs for safety and compliance\n👉 Are you planning to create new rooms or modify the layout?”"
+    },
+    {
+        "field":  "FIELD: Wall Materials",
+        "agent":  "Agent X",
+        "text":  "AGENT X (ACTION LAYER)\nFire-Rated Walls:\nWall Material: Fire-Rated PartitionsActions:✔ Meets HMO fire compliance✔ Proceed without escalation✔ Align with building regulations\nStud Walls:\nWall Material: Standard StudActions:⚠ Upgrade required for HMO✔ Advise fire-rated specification✔ Flag compliance risk\nExisting Walls:\nWall Material: ExistingActions:✔ Conduct fire safety assessment✔ Check door + escape route compliance\nNot Decided:\nWall Material: Not DefinedActions:✔ Recommend fire-rated partitions✔ Hold design finalisation✔ Coordinate with Agent Y"
+    },
+    {
+        "field":  "FIELD: Roof Materials",
+        "agent":  "Agent Z",
+        "text":  "🤖 Agent Z Smart Response (Conversational)\n“No problem, I’ll guide you 👍\nThe choice of roof material depends on the type of work you’re planning:\n• Tiles or slate → Common for pitched roofs and maintaining the look of the property• Flat roofs (felt/GRP) → Typically used for rear extensions• GRP/Fibreglass → Durable and low maintenance for modern extensions"
+    },
+    {
+        "field":  "FIELD: Roof Materials",
+        "agent":  "Agent X",
+        "text":  "AGENT X (ACTION LAYER)\nExisting Roof:\nRoof Material: ExistingActions:✔ No immediate action✔ Verify if loft conversion planned later\nPitched Roof (Tiles/Slate):\nRoof Material: Tile/SlateActions:✔ Ensure match with existing structure✔ Check planning aesthetic compliance✔ Proceed with standard validation\nFlat Roof:\nRoof Material: Flat (GRP/Felt)Actions:✔ Validate extension height limits✔ Check drainage design✔ Align with building regs\nNot Decided:\nRoof Material: Not DefinedActions:✔ Recommend default (based on project type)✔ Hold design finalisation✔ Coordinate with Agent Y"
+    },
+    {
+        "field":  "FIELD: Will the new materials match the existing property",
+        "agent":  "Agent Z",
+        "text":  "🤖 Agent Z Smart Response (Conversational)\n“That’s a great question — I can help 👍\nIn most cases, councils prefer new work to match the existing property, especially for:• Brickwork• Roof tiles• External finishes\nThis helps the extension or alteration blend in with the original building."
+    },
+    {
+        "field":  "FIELD: Will the new materials match the existing property",
+        "agent":  "Agent X",
+        "text":  "AGENT X (ACTION LAYER)\nMatch:\nMaterial Match: YesActions:✔ Proceed with planning-friendly design✔ Increase approval probability✔ Continue with standard workflow\nNot Matching:\nMaterial Match: NoActions:⚠ Planning Risk✔ Prepare design justification✔ Trigger full planning route✔ Coordinate with Agent Y for visuals\nPartial:\nMaterial Match: PartialActions:✔ Review design consistency✔ Flag moderate planning sensitivity✔ Validate with drawings\nNot Decided:\nMaterial Match: Not DefinedActions:✔ Recommend matching materials✔ Hold design finalisation✔ Clarify during consultation"
+    },
+    {
+        "field":  "FIELD: Conservation Area or Near Listed Building",
+        "agent":  "Agent Z",
+        "text":  "🤖 Agent Z Smart Response (Conversational)\n“No problem — I can help you check this 👍\nA conservation area is a location where the council protects the character and appearance of buildings.A listed building is officially recognised as historically important and has strict rules for any changes.\n👉 If your property is in one of these areas, even small changes may require planning permission."
+    },
+    {
+        "field":  "FIELD: Conservation Area or Near Listed Building",
+        "agent":  "Agent X",
+        "text":  "AGENT X (ACTION LAYER)\nConservation Area:\nConstraint: Conservation AreaActions:🔴 Full Planning Required✔ Enforce material matching✔ Restrict design flexibility✔ Assign experienced planner✔ Increase approval scrutiny level\nNear Listed Building:\nConstraint: Listed Building ProximityActions:⚠ Design Sensitivity Required✔ Review visual impact✔ Prepare justification if needed\nBoth:\nConstraint: High (Conservation + Listed)Actions:🔴 Specialist Case✔ Escalate to senior planning team✔ Detailed design + heritage consideration✔ No assumptions on permitted development\nNo Constraints:\nConstraint: NoneActions:✔ Proceed with standard workflow✔ Apply general planning rules\nNot Sure:\nConstraint: UnknownActions:✔ Trigger postcode validation (Z-ynapsis)✔ Do not proceed until confirmed"
+    },
+    {
+        "field":  "No Constraint",
+        "agent":  "Agent Z",
+        "text":  "🤖 Agent Z Smart Response (Conversational)\n“No problem — I’ll help you assess this 👍\nTrees are important in planning, especially if they are:• Large or mature• Close to your proposed extension• Protected by a Tree Preservation Order (TPO)\n👉 A simple way to think about it:If a tree is tall enough to potentially fall onto your proposed structure, it may be relevant."
+    },
+    {
+        "field":  "No Constraint",
+        "agent":  "Agent X",
+        "text":  "AGENT X (ACTION LAYER)\nTrees Present:\nTree Impact: YesActions:🔴 Trigger Tree Constraint Workflow✔ Check TPO status✔ Request tree survey (if required)✔ Adjust design positioning✔ Inform customer of potential delay\nNo Trees:\nTree Impact: NoActions:✔ Proceed with standard workflow✔ No environmental restriction\nNot Sure:\nTree Impact: UnknownActions:✔ Trigger Z-ynapsis environmental check✔ Request site photos✔ Consider site visit"
+    },
+    {
+        "field":  "FIELD: Arboriculture Report / BS5837 Report",
+        "agent":  "Agent Z",
+        "text":  "🤖 Agent Z Smart Response (Conversational)\n“No problem — I’ll explain 👍\nAn Arboricultural Report (BS5837) is a professional report that assesses:• Tree location and condition• Impact of your development on trees• Protection measures during construction\n👉 This is usually required if:• There are trees near your development• Trees are protected (TPO)• The council flags tree constraints"
+    },
+    {
+        "field":  "FIELD: Arboriculture Report / BS5837 Report",
+        "agent":  "Agent X",
+        "text":  "AGENT X (ACTION LAYER)\nReport Available:\nArboriculture Report: AvailableActions:✔ Attach to documentation briefcase✔ Proceed with planning submission✔ Reduce approval risk\nReport NOT Available (Trees Present):\nArboriculture Report: Not AvailableActions:🔴 Mandatory Requirement✔ Assign arboricultural consultant✔ Schedule tree survey✔ Hold submission until report received\nReport NOT Required:\nArboriculture Report: Not RequiredActions:✔ Proceed with standard workflow\nNot Sure:\nArboriculture Report: UnknownActions:✔ Verify tree constraint first✔ Request clarification✔ Keep workflow conditional"
+    },
+    {
+        "field":  "Report Required",
+        "agent":  "Agent Z",
+        "text":  "🤖 Agent Z Smart Response (Conversational)\n“No problem — I can check this for you 👍\nFlood Zones are defined as:• Zone 1 → Low risk• Zone 2 → Medium risk• Zone 3 → High risk\nIf your property is in Zone 2 or 3, the council may require a Flood Risk Assessment (FRA) before approval."
+    },
+    {
+        "field":  "Report Required",
+        "agent":  "Agent X",
+        "text":  "AGENT X (ACTION LAYER)\nZone 3:\nFlood Zone: 3Actions:🔴 Mandatory FRA Required✔ Assign flood risk consultant✔ Adjust design (levels, drainage)✔ Hold submission until report ready\nZone 2:\nFlood Zone: 2Actions:⚠ Conditional FRA✔ Assess project type✔ Decide if FRA needed✔ Monitor planning sensitivity\nZone 1:\nFlood Zone: 1Actions:✔ No flood constraint✔ Proceed with standard workflow\nNot Sure:\nFlood Zone: UnknownActions:✔ Trigger Z-ynapsis flood check✔ Confirm before proceeding"
+    },
+    {
+        "field":  "Zone 1",
+        "agent":  "Agent Z",
+        "text":  "🤖 Agent Z Smart Response (Conversational)\n“No problem — I’ll help clarify 👍\nContamination usually relates to past uses of the land that may have left harmful substances in the ground, such as:• Old industrial or factory use• Petrol stations or garages• Waste disposal or landfill• Chemical storage or heavy construction activity\n👉 If your property has always been residential, contamination is unlikely."
+    },
+    {
+        "field":  "Zone 1",
+        "agent":  "Agent X",
+        "text":  "AGENT X (ACTION LAYER)\nContamination Present:\nContamination: YesActions:🔴 Trigger Environmental Workflow✔ Assign environmental consultant✔ Order Phase 1 Report✔ Hold submission until cleared✔ Inform customer of risk \u0026 timeline\nNo Contamination:\nContamination: NoActions:✔ Proceed with standard workflow✔ No environmental restriction\nNot Sure:\nContamination: UnknownActions:✔ Check land history records✔ Recommend environmental screening✔ Keep submission conditional"
+    },
+    {
+        "field":  "Not Sure",
+        "agent":  "Agent Z",
+        "text":  "🤖 Agent Z Smart Response (Conversational)\n“No problem — I’ll explain 👍\nA Flood Risk Assessment (FRA) is a report that evaluates:• Flood risk to your property• Impact of your development• Drainage and mitigation measures\n👉 This is usually required if your property is in Flood Zone 2 or 3."
+    },
+    {
+        "field":  "Not Sure",
+        "agent":  "Agent X",
+        "text":  "AGENT X (ACTION LAYER)\nFRA Available:\nFlood Risk Assessment: AvailableActions:✔ Attach to documentation briefcase✔ Proceed with submission readiness✔ Reduce planning risk\nFRA NOT Available (Zone 2/3):\nFlood Risk Assessment: Not AvailableActions:🔴 Mandatory Requirement✔ Assign flood risk consultant✔ Initiate FRA preparation✔ Hold submission until report received\nFRA NOT Required (Zone 1):\nFlood Risk Assessment: Not RequiredActions:✔ Proceed with standard workflow✔ No dependency\nNot Sure:\nFlood Risk Assessment: UnknownActions:✔ Cross-check flood zone✔ Request clarification✔ Keep workflow conditional"
+    },
+    {
+        "field":  "Not Required",
+        "agent":  "Agent Z",
+        "text":  "AGENT Z — Newham Council Ready Interpretation\nNewham Council Compliance Logic\nNewham requires:\nInterlinked smoke alarms on every storey\nHeat alarm in the kitchen\nAll alarms must be mainswired with battery backup\nMust comply with BS 58396 Grade D1/D2 standards"
+    },
+    {
+        "field":  "Not Required",
+        "agent":  "Agent X",
+        "text":  "AGENT X — Action Instructions (Operational Layer)\nIf customer answered YES\nRequest:\nPhotos of alarms\nConfirmation if alarms are interlinked\nAny fire safety certificate (optional)\nUpdate briefcase: “Smoke alarms installed — verification pending”\nPrepare redacted summary for Agent Y.\nIf customer answered NO\nInform customer:\nNewham requires interlinked alarms before approval\nProvide cost estimate\nOffer:\nFire safety upgrade referral\nUpdate briefcase: “Smoke alarms missing — compliance upgrade required”\nPrepare redacted summary for Agent Y.\nIf customer answered NOT SURE\nRequest:\nPhotos of hallway, landing, kitchen ceilings\nIf unclear → Trigger Site Visit (Fire Safety Survey)\nProvide cost estimate\nSend booking link\nUpdate briefcase: “Smoke alarm status unknown — awaiting verification / survey”\nPrepare redacted summary for Agent Y.\nTrigger: Standard Installation Cost (London \u0026 Surrounding Areas)\nLondon Zones 1–4: £180 – £300 per alarm\nGreater London / M25: £150 – £250 per alarm\nHome Counties: £120 – £200 per alarm (Includes supply + installation by certified electrician)"
+    },
+    {
+        "field":  "Site visit for verification Task for YTeam",
+        "agent":  "Agent Z",
+        "text":  "AGENT Z — Newham Council Ready Interpretation\nNewham Council Compliance Logic\nNewham requires an annual Gas Safety Certificate (CP12) for any property with:\nA gas boiler\nGas hob/cooker\nGas fire\nAny gas appliance\nThe certificate must be:\nIssued within the last 12 months\nCompleted by a Gas Safe Registered Engineer\nUploaded as part of the HMO or planning compliance pack"
+    },
+    {
+        "field":  "Site visit for verification Task for YTeam",
+        "agent":  "Agent X",
+        "text":  "AGENT X — Action Instructions (Operational Layer)\nIf customer answered YES\nRequest upload of the CP12 certificate.\nVerify:\nIssue date\nGas Safe engineer number\nAppliances listed\nUpdate briefcase: “Gas Safety Certificate provided — verification pending.”\nPrepare redacted summary for Agent Y.\nIf customer answered NO\nInform customer:\nA valid CP12 is legally required for Newham compliance.\nProvide cost estimate for inspection.\nOffer:\nGas Safe engineer referral (if applicable).\nUpdate briefcase: “Gas Safety Certificate missing — inspection required.”\nPrepare redacted summary for Agent Y.\nIf customer answered NOT SURE\nRequest:\nPhoto of boiler\nAny available paperwork\nIf still unclear → Recommend Gas Safety Inspection\nProvide cost estimate\nSend booking link\nUpdate briefcase: “Gas Safety Certificate status unknown — awaiting verification / inspection.”\nPrepare redacted summary for Agent Y.\nIf customer answers: YES\nCertificate date (must be within 12 months)\nGas Safe engineer ID\nAppliance list covered\nWhether any remedial actions were noted\nRisk Level: Low (pending verification) Trigger: Request upload of CP12 certificate\nIf customer answers: NO\nNewham will not validate an HMO application without a valid CP12.\nRisk Level: High Triggers: ✔ Mandatory Gas Safety Inspection ✔ Customer must book a Gas Safe engineer ✔ Compliance cannot proceed until certificate is uploaded\nStandard Cost (London \u0026 Surrounding Areas)\nLondon Zones 1–4: £80 – £120\nGreater London / M25: £70 – £100\nHome Counties: £60 – £90"
+    },
+    {
+        "field":  "Task for YTeam",
+        "agent":  "Agent Z",
+        "text":  "AGENT Z — Newham Council Ready Interpretation\nNewham Council Compliance Logic\nNewham requires a valid Electrical Installation Condition Report (EICR) for all rented or HMO properties.\nThe EICR must:\nBe issued within the last 5 years\nBe completed by a qualified NICEIC or NAPIT electrician\nClearly state the outcome:\nSatisfactory (acceptable)\nUnsatisfactory (requires remedial work)\nInclude:\nCircuit test results\nObservations \u0026 recommendations\nRemedial actions (if any)"
+    },
+    {
+        "field":  "Task for YTeam",
+        "agent":  "Agent X",
+        "text":  "AGENT X — Action Instructions (Operational Layer)\nIf customer answered YES\nRequest upload of the EICR report.\nVerify:\nIssue date\n“Satisfactory” status\nElectrician accreditation\nAny remedial actions\nUpdate briefcase: “EICR provided — verification pending.”\nPrepare redacted summary for Agent Y.\nIf customer answered NO\nInform customer:\nA valid EICR is legally required for Newham compliance.\nProvide cost estimate for inspection.\nOffer:\nReferral to approved electricians (if applicable).\nUpdate briefcase: “EICR missing — inspection required.”\nPrepare redacted summary for Agent Y.\nIf customer answered NOT SURE\nRequest:\nPhoto of fuse board\nAny available electrical paperwork\nIf still unclear → Recommend EICR inspection\nProvide cost estimate\nSend booking link\nUpdate briefcase: “EICR status unknown — awaiting verification / inspection.”\nPrepare redacted summary for Agent Y.\nIf customer answers: NO\nNewham will not approve an HMO licence or planning compliance without a valid EICR.\nRisk Level: High Triggers: ✔ Mandatory Electrical Inspection ✔ Customer must book a qualified electrician ✔ Compliance cannot proceed until EICR is uploaded\nStandard Cost (London \u0026 Surrounding Areas)\nLondon Zones 1–4: £150 – £250\nGreater London / M25: £120 – £180\nHome Counties: £100 – £160 (Costs vary by property size and number of circuits)"
+    },
+    {
+        "field":  "Task for YTeam",
+        "agent":  "Agent Z",
+        "text":  "1. AGENT Z — Newham Council Ready Interpretation\nNewham Council Compliance Logic\nNewham requires an Energy Performance Certificate (EPC) for all rented properties and HMO applications.\nThe EPC must:\nBe valid for 10 years\nShow a rating of E or above (minimum legal standard)\nBe issued by an accredited domestic energy assessor\nBe included in the compliance pack"
+    },
+    {
+        "field":  "Task for YTeam",
+        "agent":  "Agent X",
+        "text":  "AGENT X — Action Instructions (Operational Layer)\nIf customer answered YES\nRequest upload of the EPC certificate.\nVerify:\nRating (must be E or above)\nIssue date\nAssessor accreditation\nIf EPC is F or G:\nInform customer property is noncompliant\nRecommend energy efficiency upgrades\nUpdate briefcase: “EPC provided — verification pending.”\nPrepare redacted summary for Agent Y.\nIf customer answered NO\nInform customer:\nEPC is legally required for Newham compliance.\nProvide cost estimate for EPC assessment.\nOffer:\nEPC assessor referral (if applicable).\nUpdate briefcase: “EPC missing — assessment required.”\nPrepare redacted summary for Agent Y.\nIf customer answers: NO\nNewham will not proceed with HMO licensing or planning compliance without a valid EPC.\nRisk Level: High Triggers: ✔ Mandatory EPC Assessment ✔ Customer must book an accredited assessor ✔ Compliance paused until EPC is uploaded\nStandard EPC Cost (London \u0026 Surrounding Areas)\nLondon Zones 1–4: £60 – £120\nGreater London / M25: £50 – £90\nHome Counties: £45 – £80"
+    },
+    {
+        "field":  "Task for YTeam",
+        "agent":  "Agent Z",
+        "text":  "1. AGENT Z — Newham Council Ready Interpretation\nNewham Council Compliance Logic\nNewham requires that all HMOs and rental properties have:\nA constant, potable (drinkable) water supply\nAdequate cold and hot water to all fixtures\nWater systems free from contamination\nCompliance with Legionella risk management\nNo shared external taps as the primary supply\nSufficient pressure for all occupants"
+    },
+    {
+        "field":  "Task for YTeam",
+        "agent":  "Agent X",
+        "text":  "AGENT X — Action Instructions (Operational Layer)\nIf customer answered YES\nRequest:\nConfirmation of mains or tank supply\nPhotos of boiler/hot water system\nPhoto of cold water tank (if applicable)\nAsk if there are any issues:\nLow pressure\nHot water inconsistency\nLeaks\nUpdate briefcase: “Water supply confirmed — verification pending.”\nPrepare redacted summary for Agent Y.\nIf customer answered NO\nInform customer:\nA functioning water supply is mandatory for Newham compliance.\nCompliance cannot proceed until resolved.\nProvide repair cost guidance.\nRecommend:\nPlumber visit\nBoiler engineer (if hot water issue)\nUpdate briefcase: “Water supply missing — urgent repair required.”\nPrepare redacted summary for Agent Y.\nIf customer answers: NO\nThis is a critical failure for Newham compliance.\nRisk Level: Very High Triggers: ✔ Immediate escalation to Health \u0026 Safety Review ✔ Property cannot proceed for HMO or planning compliance ✔ Customer must arrange plumbing repair or reconnection ✔ If water supply is intermittent → treat as “NO”\nTypical Repair Costs (London \u0026 Surrounding Areas)\nBasic plumbing fix: £80 – £150\nBoiler/hot water repair: £120 – £300\nCold water tank replacement: £300 – £600\nMains pressure booster: £250 – £450\nIf customer answers: NOT SURE\nTreat as nonverified until proven.\nTriggers: ✔ Request photos of:\nKitchen tap running\nBathroom taps\nBoiler / hot water cylinder\nCold water tank (if present) ✔ If unclear → Trigger Site Visit (Water Supply Check) ✔ Provide cost estimate\nStandard Site Visit Cost\nLondon Zones 1–4: £120 – £180\nGreater London / M25: £100 – £150\nHome Counties: £90 – £140"
+    },
+    {
+        "field":  "Task for YTeam",
+        "agent":  "Agent Z",
+        "text":  "1. AGENT Z — Newham Council Ready Interpretation\nNewham Council Compliance Logic\nNewham requires all HMOs and rental properties to have:\nA safe, functional connection to the public sewer or an approved private system\nNo blockages, leaks, or backflow issues\nProper drainage for:\nKitchens\nBathrooms\nToilets\nExternal areas\nCompliance with Building Regulations Part H (Drainage \u0026 Waste Disposal)\nIf customer answers: NO\nThis is a critical compliance failure.\nNewham will not approve an HMO or planning application if:\nThe property is not connected to a proper sewage system\nThere are active drainage failures\nToilets or waste pipes are non-functional\nRisk Level: Very High Triggers: ✔ Immediate escalation to Health \u0026 Safety / Environmental Review ✔ Customer must arrange plumbing or drainage repair ✔ Compliance paused until fixed\nTypical Repair Costs (London \u0026 Surrounding Areas)\nDrain unblocking: £80 – £150\nCCTV drain survey: £120 – £250\nDrain repair (minor): £200 – £600\nMajor drain replacement: £1,000 – £3,000+\nIf customer answers: NOT SURE\nTreat as nonverified until confirmed.\nTriggers: ✔ Request photos of:\nManhole covers\nExternal drainage\nBathroom/kitchen waste pipes ✔ Ask if there are any signs of:\nSlow drainage\nGurgling noises\nFoul smells ✔ If unclear → Trigger Site Visit (Drainage Assessment) ✔ Provide cost estimate\nStandard Site Visit Cost\nLondon Zones 1–4: £120 – £180\nGreater London / M25: £100 – £150\nHome Counties: £90 – £140"
+    },
+    {
+        "field":  "Task for YTeam",
+        "agent":  "Agent Z",
+        "text":  "1. AGENT Z — Newham Council Ready Interpretation\nNewham Council Compliance Logic\nNewham requires all HMOs and rental properties to have adequate surface water drainage to prevent:\nFlooding\nWater pooling\nDamp and mould\nStructural damage\nNeighbouring property impact\nSurface water must drain into:\nPublic surface water sewer, OR\nSoakaway system, OR\nSustainable Drainage System (SuDS)\nIt must NOT drain into the foul sewer unless explicitly permitted."
+    },
+    {
+        "field":  "Task for YTeam",
+        "agent":  "Agent X",
+        "text":  "AGENT X — Action Instructions (Operational Layer)\nIf customer answered YES\nRequest:\nPhotos of gutters, downpipes, and drainage points\nConfirmation of drainage type (soakaway / sewer / SuDS)\nAny history of flooding or pooling\nUpdate briefcase: “Surface water drainage confirmed — verification pending.”\nPrepare redacted summary for Agent Y.\nIf customer answered NO\nInform customer:\nSurface water drainage is mandatory for Newham compliance.\nCompliance cannot proceed until resolved.\nProvide repair cost guidance.\nRecommend:\nDrainage specialist\nGutter/downpipe repair\nSoakaway installation (if needed)\nUpdate briefcase: “Surface water drainage missing — urgent repair required.”\nPrepare redacted summary for Agent Y.\nIf customer answered NOT SURE\nRequest:\nPhotos of external drainage\nPhotos of gutters/downpipes\nAny signs of water pooling\nIf unclear → Trigger Site Visit (Drainage Assessment)\nProvide cost estimate\nSend booking link\nUpdate briefcase: “Surface water drainage status unknown — awaiting verification / site visit.”\nPrepare redacted summary for Agent Y.\nIf customer answers: NO\nThis is a major compliance issue.\nNewham will not approve an HMO or planning application if:\nRainwater has nowhere to drain\nWater pools near the building\nGutters/downpipes are missing or broken\nSurface water drains into foul sewer illegally\nRisk Level: Very High Triggers: ✔ Immediate drainage assessment ✔ Customer must arrange repair or installation ✔ Compliance paused until resolved\nTypical Repair Costs (London \u0026 Surrounding Areas)\nGutter/downpipe repair: £80 – £150\nNew soakaway installation: £600 – £1,200\nSurface water drain repair: £200 – £600\nSuDS installation: £1,000 – £3,000+\nIf customer answers: NOT SURE\nTreat as nonverified until confirmed.\nTriggers: ✔ Request photos of:\nGutters\nDownpipes\nExternal ground levels\nAny visible drainage grates ✔ Ask if there is any water pooling after rain ✔ If unclear → Trigger Site Visit (Drainage Assessment) ✔ Provide cost estimate\nStandard Site Visit Cost\nLondon Zones 1–4: £120 – £180\nGreater London / M25: £100 – £150\nHome Counties: £90 – £140"
+    },
+    {
+        "field":  "Task for YTeam",
+        "agent":  "Agent Z",
+        "text":  "1. AGENT Z — Newham Council Ready Interpretation\nNewham Council Compliance Logic\nNewham requires all HMOs and rental properties to have:\nAdequate waste storage capacity for the number of occupants\nCorrect bin types (general waste, recycling, food waste)\nSecure, pestproof storage areas\nClear access routes for waste collection\nNo accumulation of rubbish in front or rear gardens\nCompliance with Newham Waste \u0026 Recycling Standards"
+    },
+    {
+        "field":  "Task for YTeam",
+        "agent":  "Agent X",
+        "text":  "AGENT X — Action Instructions (Operational Layer)\nIf customer answered YES\nRequest:\nPhotos of bin storage area\nConfirmation of bin types (general, recycling, food waste)\nAny issues with overflow or pests\nCheck if bin capacity matches occupancy\nUpdate briefcase: “Waste arrangements confirmed — verification pending.”\nPrepare redacted summary for Agent Y.\nIf customer answered NO\nInform customer:\nWaste arrangements are mandatory for Newham compliance.\nThey must order correct bins before proceeding.\nProvide guidance:\nLink to Newham bin ordering service\nAdvice on creating a secure waste storage area\nUpdate briefcase: “Waste arrangements missing — action required.”\nPrepare redacted summary for Agent Y.\nIf customer answered NOT SURE\nRequest:\nPhotos of front and rear waste areas\nConfirmation of bin types (if any)\nIf unclear → Trigger Site Visit (Waste Assessment)\nProvide cost estimate\nSend booking link\nUpdate briefcase: “Waste arrangements unknown — awaiting verification / site visit.”\nPrepare redacted summary for Agent Y."
+    },
+    {
+        "field":  "Task for YTeam",
+        "agent":  "Agent Z",
+        "text":  "1. AGENT Z — Newham Council Ready Interpretation\nNewham Council Planning \u0026 HMO Compliance Logic\nNewham strongly supports renewable energy installations but requires proper classification and documentation, especially for HMOs or properties undergoing planning review.\nRenewable systems include:\nSolar PV panels\nSolar thermal (hot water)\nAir source heat pumps (ASHP)\nGround source heat pumps (GSHP)\nBattery storage systems\nMicrowind turbines\nEV charging points (lowcarbon infrastructure)"
+    },
+    {
+        "field":  "Task for YTeam",
+        "agent":  "Agent X",
+        "text":  "AGENT X — Action Instructions (Operational Layer)\nIf customer answered YES\nRequest:\nType of renewable system\nLocation (roof, garden, external wall)\nPhotos of installation area\nTrigger:\nPlanning classification review\nFire safety review (if battery storage or heat pump)\nUpdate briefcase: “Renewable installation proposed — awaiting technical assessment.”\nPrepare redacted summary for Agent Y.\nIf customer answered NO\nNo action required beyond recording the response.\nUpdate briefcase: “No renewable installations proposed.”\nPrepare redacted summary for Agent Y.\nIf customer answered NOT SURE\nRequest:\nWhat type of system they are considering\nPhotos of roof/external areas\nOffer:\nRenewable feasibility assessment\nProvide cost estimate\nUpdate briefcase: “Renewable installation status unknown — awaiting clarification / assessment.”\nPrepare redacted summary for Agent Y."
+    },
+    {
+        "field":  "Task for YTeam",
+        "agent":  "Agent Z",
+        "text":  "✅ 1. AGENT Z — Newham Council Ready Interpretation\nWhat “Additional Consents” Means in Newham\nNewham Council may require extra consents depending on the property type, location, and proposed use. These may include:\nCommon Additional Consents\nFreeholder Consent Required if the property is leasehold.\nMortgage Lender Consent Required if the property is mortgaged and being converted to HMO.\nBuilding Control Approval Needed for structural changes, fire doors, partitions, bathrooms, etc.\nPlanning Permission / Lawful Development Certificate Required for:\nChange of use (C3 → C4 or Sui Generis)\nExtensions\nLoft conversions\nOutbuildings\nExternal alterations\nParty Wall Agreements Required if works affect shared walls or boundaries.\nConservation Area Consent If the property is in a conservation area.\nListed Building Consent If the property is listed.\nEnvironmental Health Approval For large HMOs or properties with previous enforcement history."
+    },
+    {
+        "field":  "Task for YTeam",
+        "agent":  "Agent X",
+        "text":  "AGENT X — Action Instructions (Operational Layer)\nIf customer answered YES\nRequest:\nType of consent(s) required\nWhether consent has been obtained\nUpload of any supporting documents\nTrigger:\nPlanning/legal review\nFreeholder/mortgage compliance check\nUpdate briefcase: “Additional consents declared — verification pending.”\nPrepare redacted summary for Agent Y.\nIf customer answered NO\nNo action required beyond recording the response.\nUpdate briefcase: “No additional consents required.”\nPrepare redacted summary for Agent Y.\nIf customer answered NOT SURE\nAsk:\nIs the property leasehold?\nIs the property mortgaged?\nAre any structural works planned?\nIs the property in a conservation area?\nOffer:\nConsent Check Review\nProvide cost estimate\nUpdate briefcase: “Additional consents unknown — awaiting clarification / review.”\nPrepare redacted summary for Agent Y."
+    }
+]
+

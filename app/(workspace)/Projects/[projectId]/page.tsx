@@ -13,6 +13,7 @@ import {
   AlertCircle,
   Bot,
   Building2,
+  ClipboardList,
   Flag,
   FileSearch,
   FileText,
@@ -20,7 +21,6 @@ import {
   Lock,
   Ruler,
   CheckCircle,
-  Shield,
   Sparkles,
 } from "lucide-react"
 import ConstructionLoadingDock from "@/components/ConstructionLoadingDock"
@@ -40,6 +40,7 @@ import {
   normalizeProjects,
 } from "@/lib/projects-data"
 import { fetchProjectWithEligibility } from "@/lib/project-api"
+import { AGENT_XZ_RESPONSES } from "@/lib/agent-xz-responses"
 
 type JourneyStep = JourneyStageApiItem & {
   icon: ElementType
@@ -95,6 +96,7 @@ const JOURNEY_STAGE_ICON_MAP: Record<
   "file-text": FileText,
   "file-search": FileSearch,
   "file-check": FileCheck,
+  "clipboard-list": ClipboardList,
   ruler: Ruler,
   flag: Flag,
 }
@@ -1710,6 +1712,13 @@ export default function ProjectDetailsPage() {
                   }
                 }}
               />
+              <ResponsesFeePendingDocumentsDetails
+                stage={openedJourneyStage}
+                isActive={
+                  openedJourneyStage?.screen ===
+                  "responses-fee-pending-documents"
+                }
+              />
               <SubmitBriefcaseDetails
                 stage={openedJourneyStage}
                 isActive={
@@ -1764,7 +1773,7 @@ function RoadmapStep({
     <button
       type="button"
       onClick={onClick}
-      className="flex min-w-[120px] flex-col items-center gap-2 cursor-pointer"
+      className="flex min-w-30 flex-col items-center gap-2 cursor-pointer"
     >
       <div
         className={`
@@ -2040,7 +2049,7 @@ function EligibilityCheckDetails({
   return (
     <div className="mt-5 space-y-5">
       <div className="overflow-hidden rounded-[26px] border border-slate-200 bg-white shadow-[0_16px_40px_-34px_rgba(15,23,42,0.55)]">
-        <div className="bg-gradient-to-r from-slate-950 via-blue-950 to-slate-900 px-5 py-5 text-white">
+        <div className="bg-linear-to-r from-slate-950 via-blue-950 to-slate-900 px-5 py-5 text-white">
           <div className="flex max-w-3xl items-start gap-3">
               <div className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-blue-400/15 ring-1 ring-blue-300/30">
                 <Bot className="h-5 w-5 text-blue-200" />
@@ -2551,7 +2560,7 @@ function BriefcaseStageDetails({
         }`}
       >
         <div className="overflow-hidden rounded-[26px] border border-slate-200 bg-white shadow-[0_16px_40px_-34px_rgba(15,23,42,0.55)]">
-          <div className="bg-gradient-to-r from-slate-950 via-blue-950 to-slate-900 px-5 py-5 text-white">
+          <div className="bg-linear-to-r from-slate-950 via-blue-950 to-slate-900 px-5 py-5 text-white">
             <div className="flex max-w-3xl items-start gap-3">
               <div className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-white/10 ring-1 ring-white/15">
                 <StageIcon className="h-5 w-5 text-blue-200" />
@@ -2859,15 +2868,15 @@ function BriefcaseViewModal({
         </div>
 
         <div className="grid gap-5 px-5 py-5 lg:grid-cols-[1.4fr_0.9fr]">
-          <div className="rounded-[24px] border border-slate-200 bg-slate-50 p-3">
+          <div className="rounded-3xl border border-slate-200 bg-slate-50 p-3">
             {card.document?.type === "pdf" && card.document.publicPath ? (
               <iframe
                 src={`${card.document.publicPath}#toolbar=0`}
                 title={`${card.title} preview`}
-                className="h-[560px] w-full rounded-[18px] border border-slate-200 bg-white"
+                className="h-140 w-full rounded-[18px] border border-slate-200 bg-white"
               />
             ) : card.document?.type === "docx" ? (
-              <div className="h-[560px] overflow-y-auto rounded-[18px] border border-slate-200 bg-white p-4">
+              <div className="h-140 overflow-y-auto rounded-[18px] border border-slate-200 bg-white p-4">
                 {documentPreviewText ? (
                   <div className="space-y-4">
                     {documentPreviewBlocks.map((block, index) => {
@@ -2898,14 +2907,14 @@ function BriefcaseViewModal({
                 )}
               </div>
             ) : (
-              <div className="flex h-[280px] items-center justify-center rounded-[18px] border border-dashed border-slate-300 bg-white px-6 text-center text-sm text-slate-500">
+              <div className="flex h-70 items-center justify-center rounded-[18px] border border-dashed border-slate-300 bg-white px-6 text-center text-sm text-slate-500">
                 Preview not available for this field yet.
               </div>
             )}
           </div>
 
           <div className="space-y-3">
-            <div className="rounded-[24px] border border-slate-200 bg-white p-4">
+            <div className="rounded-3xl border border-slate-200 bg-white p-4">
               <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
                 Document Notes
               </p>
@@ -2983,7 +2992,7 @@ function AgentZResponseModal({
 
   return (
     <div className="overflow-hidden rounded-[26px] border border-slate-800 bg-slate-950 text-white shadow-[0_20px_60px_-28px_rgba(2,6,23,0.85)]">
-      <div className="border-b border-white/10 bg-[radial-gradient(circle_at_top,_rgba(59,130,246,0.28),_transparent_45%),linear-gradient(135deg,#020617_0%,#0f172a_55%,#111827_100%)] px-4 py-4">
+      <div className="border-b border-white/10 bg-[radial-gradient(circle_at_top,rgba(59,130,246,0.28),transparent_45%),linear-gradient(135deg,#020617_0%,#0f172a_55%,#111827_100%)] px-4 py-4">
         <div className="flex items-start justify-between gap-4">
           <div className="flex items-start gap-3">
             <div className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl border border-blue-400/20 bg-blue-500/10">
@@ -3107,7 +3116,7 @@ function SubmitBriefcaseDetails({
   return (
     <div className="mt-6 space-y-5">
       <div className="overflow-hidden rounded-[26px] border border-slate-200 bg-white shadow-[0_16px_40px_-34px_rgba(15,23,42,0.55)]">
-        <div className="bg-gradient-to-r from-slate-950 via-blue-950 to-slate-900 px-5 py-5 text-white">
+        <div className="bg-linear-to-r from-slate-950 via-blue-950 to-slate-900 px-5 py-5 text-white">
           <div className="flex flex-col gap-5 xl:flex-row xl:items-start xl:justify-between">
             <div className="flex max-w-3xl items-start gap-3">
               <div className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-white/10 ring-1 ring-white/15">
@@ -3183,7 +3192,7 @@ function SubmitBriefcaseDetails({
           {briefcaseSections.map(({ id, content }) => (
             <div
               key={id}
-              className="rounded-[24px] border border-slate-200 bg-white p-4 shadow-sm"
+              className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm"
             >
               <div className="flex items-start justify-between gap-3">
                 <div>
@@ -3298,6 +3307,674 @@ function JourneyStagePlaceholder({
   )
 }
 
+function ResponsesFeePendingDocumentsDetails({
+  stage,
+  isActive,
+}: {
+  stage: JourneyStep | null
+  isActive: boolean
+}) {
+  const [activeFieldResponse, setActiveFieldResponse] = useState<
+    string | null
+  >(null)
+
+  if (!isActive || !stage) {
+    return null
+  }
+
+  const sanitizeAgentYResponse = (value: string) =>
+    value
+      .split(/\r?\n/)
+      .filter((line) => !/project\s*id/i.test(line))
+      .filter((line) => !/^\s*Report Required:/i.test(line))
+      .join("\n")
+
+  const buildStructuredAgentYResponse = (
+    field: string,
+    rawText: string
+  ) => {
+    const exactRedactedResponses: Record<string, string> = {
+      "Property Type": `Project ID: HMO-0043
+Property Type: Terraced
+Source: AI Assisted
+Confidence: Medium
+Planning Sensitivity:
+- Shared Walls: Yes
+- Extension Constraint: Rear-focused`,
+      "Ownership Status": `Leasehold Example:
+Project ID: HMO-0043
+Ownership: Leasehold
+Consent Required: Yes
+Status: Pending Verification
+Tenant Example:
+Project ID: HMO-0043
+Ownership: Tenant
+Authorization Required: Owner Approval
+Processing Status: On Hold`,
+      "Are you planning any building works?": `Example:
+Project ID: HMO-0043
+Works Type:
+- Rear Extension
+- Internal Reconfiguration
+Drawings Required: Yes
+Planning Sensitivity: High
+If No Works:
+Project ID: HMO-0043
+Works Type: None
+Drawings Required: No (Initial Stage)`,
+      "Has the property already been extended before ?": `Example:
+Project ID: HMO-0043
+Existing Extensions:
+- Rear Extension
+Planning Constraint Level: Medium
+Drawings Required: Yes
+High Risk Case:
+Project ID: HMO-0043
+Existing Extensions:
+- Rear
+- Loft
+- Side
+Planning Constraint Level: High
+PD Allowance: Likely Exhausted`,
+      "Will occupants share kitchen and/or bathroom?": `Shared Example:
+Project ID: HMO-0043
+Facility Type: Shared
+HMO Classification: Confirmed
+Ensuite Example:
+Project ID: HMO-0043
+Facility Type: Ensuite Model
+HMO Classification: Confirmed
+Self-contained Example:
+Project ID: HMO-0043
+Facility Type: Self-contained Units
+Classification: Non-Standard`,
+      "Will tenants have separate rental agreements for individual rooms?": `Individual Letting:
+Project ID: HMO-0043
+Letting Model: Individual Rooms
+HMO Status: Confirmed
+Whole Property:
+Project ID: HMO-0043
+Letting Model: Single Tenancy
+HMO Status: Not Applicable (Initial)
+Mixed:
+Project ID: HMO-0043
+Letting Model: Mixed
+Classification: Under Review`,
+      "Wall Materials": `Fire-Rated:
+Project ID: HMO-0043
+Wall Type: Fire-Rated Partition
+Compliance: Suitable
+Stud Walls:
+Project ID: HMO-0043
+Wall Type: Standard Partition
+Compliance: Upgrade Required
+Not Decided:
+Project ID: HMO-0043
+Wall Type: TBD
+Instruction: Apply HMO Fire Compliance Standard`,
+      "Roof Materials": `Example:
+Project ID: HMO-0043
+Roof Type: Flat (Rear Extension)
+Material: GRP
+Compliance: Standard
+Loft Example:
+Project ID: HMO-0043
+Roof Type: Pitched
+Material: Tile (Match Existing)
+Planning Sensitivity: Medium
+Not Decided:
+Project ID: HMO-0043
+Roof Material: TBD
+Instruction: Apply context-based standard`,
+      "Will the new materials match the existing property": `Match:
+Project ID: HMO-0043
+Material Strategy: Match Existing
+Planning Sensitivity: Low
+Not Matching:
+Project ID: HMO-0043
+Material Strategy: Contrast Design
+Planning Sensitivity: High
+Justification Required: Yes
+Partial:
+Project ID: HMO-0043
+Material Strategy: Partial Match
+Planning Sensitivity: Medium`,
+      "Conservation Area or Near Listed Building": `Conservation Area:
+Project ID: HMO-0043
+Planning Constraint: Conservation Area
+Design Restriction: High
+Material Sensitivity: Mandatory Match
+Listed Proximity:
+Project ID: HMO-0043
+Planning Constraint: Near Listed Building
+Design Sensitivity: Medium-High
+No Constraint:
+Project ID: HMO-0043
+Planning Constraint: None`,
+      "Are there trees near the property?": `Trees Present:
+Project ID: HMO-0043
+Tree Constraint: Yes
+TPO Status: To Be Verified
+Design Impact: High
+No Trees:
+Project ID: HMO-0043
+Tree Constraint: None
+Not Sure:
+Project ID: HMO-0043
+Tree Constraint: Unknown
+Instruction: Verify via survey/data`,
+      "Arboriculture Report / BS5837 Report": `Report Available:
+Project ID: HMO-0043
+Tree Report: Available
+Status: Attached
+Impact: Assessed
+Report Required:
+Project ID: HMO-0043
+Tree Report: Required
+Status: Pending
+Instruction: Await survey before design finalisation`,
+      "Is the site in Flood Zone 2 or 3?": `Zone 3:
+Project ID: HMO-0043
+Flood Zone: 3
+FRA Requirement: Mandatory
+Design Impact: High
+Zone 2:
+Project ID: HMO-0043
+Flood Zone: 2
+FRA Requirement: Conditional
+Zone 1:
+Project ID: HMO-0043
+Flood Zone: 1
+Constraint: None`,
+      "Any known contamination on site?": `Yes:
+Project ID: HMO-0043
+Contamination Risk: Yes
+Report Required: Phase 1 Environmental
+Status: Pending
+No:
+Project ID: HMO-0043
+Contamination Risk: None
+Not Sure:
+Project ID: HMO-0043
+Contamination Risk: Unknown
+Instruction: Verify via land records`,
+      "Flood Risk Report": `FRA Available:
+Project ID: HMO-0043
+Flood Report: Available
+Status: Attached
+Compliance: Met
+FRA Required:
+Project ID: HMO-0043
+Flood Report: Required
+Status: Pending
+Instruction: Await before final drawings/submission
+Not Required:
+Project ID: HMO-0043
+Flood Report: Not Required`,
+      "Gas Safety Certificate (CP12)": `Field: Gas Safety Certificate Status
+Customer Response: Yes / No / Not Sure
+Redacted Summary:
+- Gas Safety Certificate required for Newham compliance.
+- Current status: Pending verification / Missing / Unknown.
+- Awaiting:
+  - CP12 upload OR
+  - Gas Safety Inspection OR
+  - Customer clarification
+- No personal data included.
+Task for Y Team:
+- Validate certificate once uploaded.
+- Flag any non compliant or expired certificates.
+- Add fire/gas compliance notes to final submission pack.`,
+      "Electrical Report (EICR)": `Field: Electrical Report (EICR) Status
+Customer Response: Yes / No / Not Sure
+Redacted Summary:
+- EICR required for Newham compliance (valid for 5 years).
+- Current status: Pending verification / Missing / Unknown.
+- Awaiting:
+  - EICR upload OR
+  - Electrical inspection OR
+  - Customer clarification
+- No personal data included.
+Task for Y Team:
+- Validate EICR once uploaded.
+- Flag any "Unsatisfactory" reports or C1/C2/FI issues.
+- Add electrical compliance notes to final submission pack.`,
+      "Energy Performance Certificate (EPC)": `Field: EPC Status
+Customer Response: Yes / No / Not Sure
+Redacted Summary:
+- EPC required for Newham compliance (valid 10 years, minimum Band E).
+- Current status: Pending verification / Missing / Unknown.
+- Awaiting:
+  - EPC upload OR
+  - EPC assessment OR
+  - Customer clarification
+- No personal data included.
+Task for Y Team:
+- Validate EPC once uploaded.
+- Flag any EPC rating below Band E.
+- Add energy compliance notes to final submission pack.`,
+      "Water Supply": `Field: Water Supply Status
+Customer Response: Yes / No / Not Sure
+Redacted Summary:
+- Water supply must be safe, continuous, and compliant with Newham standards.
+- Current status: Pending verification / Missing / Unknown.
+- Awaiting:
+  - Photos of taps/boiler/tank OR
+  - Plumbing repair OR
+  - Site visit for verification
+- No personal data included.
+Task for Y Team:
+- Validate water supply evidence once uploaded.
+- Flag any issues affecting habitability or compliance.
+- Add water safety notes to final submission pack.`,
+      "Sewage / Foul Drainage": `Field: Sewage / Drainage Status
+Customer Response: Yes / No / Not Sure
+Redacted Summary:
+- Sewage/drainage must be functional and compliant with Newham standards.
+- Current status: Pending verification / Missing / Unknown.
+- Awaiting:
+  - Confirmation of mains connection
+  - Photos of drainage system
+  - Plumbing/drainage repair
+  - Site visit (if required)
+- No personal data included.
+Task for Y Team:
+- Validate drainage evidence once uploaded.
+- Flag any issues affecting habitability or compliance.
+- Add drainage compliance notes to final submission pack.`,
+      "Surface Water Drainage": `Field: Surface Water Drainage Status
+Customer Response: Yes / No / Not Sure
+Redacted Summary:
+- Surface water drainage must comply with Newham standards to prevent flooding and damp.
+- Current status: Pending verification / Missing / Unknown.
+- Awaiting:
+  - Photos of drainage system
+  - Confirmation of drainage type
+  - Repair works
+  - Site visit (if required)
+- No personal data included.
+Task for Y Team:
+- Validate drainage evidence once uploaded.
+- Flag any issues affecting external water management.
+- Add drainage compliance notes to final submission pack.`,
+      "Waste Arrangements": `Field: Existing Waste Arrangements
+Customer Response: Yes / No / Not Sure
+Redacted Summary:
+- Waste arrangements must comply with Newham standards (correct bins, adequate capacity, secure storage).
+- Current status: Pending verification / Missing / Unknown.
+- Awaiting:
+  - Photos of waste storage area
+  - Confirmation of bin types
+  - Customer ordering new bins
+  - Site visit (if required)
+- No personal data included.
+Task for Y Team:
+- Validate waste arrangements once evidence is uploaded.
+- Flag any issues affecting hygiene, pests, or compliance.
+- Add waste management notes to final submission pack.`,
+      "Additional Consents": `Field: Additional Consents
+Customer Response: Yes / No / Not Sure
+Redacted Summary:
+- Additional consents may include freeholder, lender, planning, building control, or conservation approvals.
+- Current status: Pending verification / Not required / Unknown.
+- Awaiting:
+  - Details of required consents
+  - Supporting documents
+  - Consent review (if needed)
+- No personal data included.
+Task for Y Team:
+- Assess planning/legal implications.
+- Flag any missing consents that affect compliance.
+- Add consent notes to final submission pack.`,
+      "Smoke Alarms": `Field: Smoke Alarm Installation Status
+Customer Response: Yes / No / Not Sure
+Redacted Summary:
+- Smoke alarm compliance requires verification.
+- Newham standards: Interlinked alarms on all floors + heat alarm in kitchen.
+- Pending items:
+  - Photos / certificates OR
+  - Fire safety upgrade OR
+  - Site visit for verification
+Task for Y Team:
+- Validate compliance once evidence is uploaded.
+- Flag any missing alarms or non compliant installations.
+- Prepare fire safety compliance notes for final pack.`,
+    }
+
+    if (exactRedactedResponses[field]) {
+      const exact = sanitizeAgentYResponse(exactRedactedResponses[field])
+      return `AGENT Y (REDACTED DATA)
+
+${exact}`
+    }
+
+    const sanitized = sanitizeAgentYResponse(rawText)
+    const candidateLines = sanitized
+      .split(/\r?\n/)
+      .map((line) => line.replace(/[^\x20-\x7E]/g, "").trim())
+      .filter(Boolean)
+      .filter((line) => !/^agent z/i.test(line))
+      .filter((line) => !/^final confirmation/i.test(line))
+
+    const notes = candidateLines
+      .filter((line) =>
+        /(planning|compliance|consent|required|risk|check|review|certificate|drainage|layout|safety|classification|assessment)/i.test(
+          line
+        )
+      )
+      .slice(0, 4)
+      .map((line) => `- ${line}`)
+
+    const fallbackNotes = candidateLines
+      .slice(0, 4)
+      .map((line) => `- ${line}`)
+
+    const selectedNotes = notes.length > 0 ? notes : fallbackNotes
+
+    return `AGENT Y (REDACTED DATA)
+
+Field: ${field}
+Source: AI Assisted
+Confidence: Medium
+
+Redacted Summary:
+${selectedNotes.join("\n")}`
+  }
+
+  const agentYResponseOverrides: Record<string, string> = {
+    "Property Type": `AGENT Y (REDACTED DATA)
+
+Property Type: Terraced
+Source: AI Assisted
+Confidence: Medium
+
+Planning Sensitivity:
+- Shared Walls: Yes
+- Extension Constraint: Rear-focused`,
+  }
+
+  const resolveFieldName = (
+    field: string,
+    text: string,
+    index: number
+  ) => {
+    const normalized = field
+      .replace(/^FIELD:\s*/i, "")
+      .replace(/\s+/g, " ")
+      .trim()
+      .replace(/\s:\s*$/, "")
+
+    const titleCaseMap: Record<string, string> = {
+      "Ownership status": "Ownership Status",
+      "Are you planning any building works ?":
+        "Are you planning any building works?",
+      "If No Works": "Has the property already been extended before ?",
+      "High Risk Case": "Will occupants share kitchen and/or bathroom?",
+      "No Constraint": "Are there trees near the property?",
+      "Flood risk report": "Flood Risk Report",
+      "Any known contamination on site?": "Any known contamination on site?",
+      "Not Required": "Smoke Alarms",
+      "Site visit for verification Task for YTeam":
+        "Gas Safety Certificate (CP12)",
+    }
+
+    if (titleCaseMap[normalized]) {
+      return titleCaseMap[normalized]
+    }
+
+    if (/is the site in flood zone 2 or 3/i.test(normalized)) {
+      return "Is the site in Flood Zone 2 or 3?"
+    }
+
+    if (/any known contamination on site/i.test(normalized)) {
+      return "Any known contamination on site?"
+    }
+
+    if (normalized === "Self-contained Example") {
+      return "Will tenants have separate rental agreements for individual rooms?"
+    }
+
+    if (normalized === "Mixed") {
+      if (/shared kitchen|own cooking space|communal kitchen/i.test(text)) {
+        return "Is there a communal kitchen?"
+      }
+      if (/dimensions|measurement survey|site visit/i.test(text)) {
+        return "Are accurate property dimensions available?"
+      }
+      return "Mixed Layout Clarification"
+    }
+
+    if (normalized === "Task for YTeam") {
+      if (/Electrical Installation Condition Report|EICR/i.test(text))
+        return "Electrical Report (EICR)"
+      if (/Energy Performance Certificate|EPC/i.test(text))
+        return "Energy Performance Certificate (EPC)"
+      if (/potable .*water supply|Legionella/i.test(text))
+        return "Water Supply"
+      if (/public sewer|Drainage .*Waste Disposal|sewage/i.test(text))
+        return "Sewage / Foul Drainage"
+      if (/surface water drainage|SuDS|soakaway/i.test(text))
+        return "Surface Water Drainage"
+      if (/waste storage|Waste .*Recycling Standards|bin/i.test(text))
+        return "Waste Arrangements"
+      if (/renewable energy|Solar PV|heat pumps|EV charging/i.test(text))
+        return "Renewable Energy Installations"
+      if (/Additional Consents|Freeholder Consent|Mortgage Lender Consent/i.test(text))
+        return "Additional Consents"
+      return `Y Team Task ${index + 1}`
+    }
+
+    return normalized
+  }
+
+  const seenFields = new Set<string>()
+  const agentYResponsesByField = AGENT_XZ_RESPONSES.filter(
+    (response) => response.agent === "Agent Z"
+  )
+    .map((response, index) => {
+      const displayField = resolveFieldName(
+        response.field,
+        response.text,
+        index
+      )
+
+      return {
+        id: `${displayField}-${index}`,
+        field: displayField,
+        text:
+          agentYResponseOverrides[displayField] ??
+          agentYResponseOverrides[response.field] ??
+          buildStructuredAgentYResponse(displayField, response.text),
+      }
+    })
+    .filter(
+      (response) =>
+        !["Report Required", "Zone 1", "Not Sure"].includes(
+          response.field
+        )
+    )
+    .filter((response) => {
+      if (seenFields.has(response.field)) {
+        return false
+      }
+      seenFields.add(response.field)
+      return true
+    })
+
+  const pendingGroups = [
+    {
+      title: "Documents",
+      items: [
+        "CIL Form (Required)",
+        "Location Plan (Required)",
+        "Site Plan (Required)",
+        "Application Form (Required)",
+        "Ownership Certificate (Required)",
+        "Application Fee Evidence (Required)",
+        "Heritage Assessment (Optional)",
+        "Biodiversity Report (Optional)",
+      ],
+    },
+    {
+      title: "Compliance",
+      items: [
+        "Smoke alarms",
+        "Gas Safety Certificate",
+        "Electrical Report (EICR)",
+        "EPC",
+      ],
+    },
+    {
+      title: "Drawings",
+      items: [
+        "Location plan",
+        "Site plan",
+        "Existing and Proposed Plans",
+        "Elevations",
+        "Photographs",
+        "Additional drawings",
+      ],
+    },
+  ] as const
+
+  return (
+    <div className="mt-6 space-y-5">
+      <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-500">
+          Responses
+        </p>
+        <div className="mt-4 max-h-225 space-y-3 overflow-y-auto pr-1">
+          {agentYResponsesByField.map((response) => (
+            <div
+              key={response.id}
+              className="overflow-hidden rounded-[22px] border border-slate-800 bg-slate-950 p-4 text-white shadow-[0_20px_60px_-28px_rgba(2,6,23,0.85)]"
+            >
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <span className="rounded-full border border-blue-400/20 bg-blue-500/10 px-2.5 py-1 text-[11px] font-semibold tracking-[0.14em] text-blue-200">
+                  {response.field}
+                </span>
+                <button
+                  type="button"
+                  onClick={() =>
+                    setActiveFieldResponse((current) =>
+                      current === response.field ? null : response.field
+                    )
+                  }
+                  className="rounded-full border border-blue-400/20 bg-blue-500/10 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-blue-200 transition hover:bg-blue-500/20"
+                >
+                  Agent Z response to Y
+                </button>
+              </div>
+
+              {activeFieldResponse === response.field && (
+                <pre className="mt-3 whitespace-pre-wrap rounded-xl border border-blue-400/15 bg-slate-900/80 px-3 py-3 font-sans text-sm leading-6 text-slate-100">
+                  {response.text}
+                </pre>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-500">
+          Council Submission Fee
+        </p>
+          <div className="mt-3 rounded-2xl border border-slate-200 bg-white p-4">
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div>
+                <h4 className="text-lg font-semibold text-slate-900">
+                  Fee Breakdown - Newham Council (2026)
+                </h4>
+                <p className="mt-1 text-sm text-slate-600">
+                  Approximate council and licensing charges for
+                  HMO-related submission work.
+                </p>
+              </div>
+              <span className="rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-700">
+                Due Pending
+              </span>
+            </div>
+
+            <div className="mt-4 overflow-hidden rounded-2xl border border-slate-200">
+              <div className="grid grid-cols-2 bg-slate-100 px-4 py-3 text-xs font-semibold uppercase tracking-[0.14em] text-slate-600">
+                <p>Category</p>
+                <p>Fee</p>
+              </div>
+
+              <div className="grid grid-cols-2 border-t border-slate-200 bg-white px-4 py-3 text-sm">
+                <p className="font-semibold text-slate-900">
+                  Mandatory HMO Licence
+                </p>
+                <p className="font-semibold text-slate-900">
+                  GBP 1,400 per property
+                </p>
+              </div>
+
+              <div className="grid grid-cols-2 border-t border-slate-200 bg-white px-4 py-3 text-sm">
+                <p className="font-semibold text-slate-900">
+                  Planning Permission (Change of Use)
+                </p>
+                <p className="font-semibold text-slate-900">GBP 258</p>
+              </div>
+
+              <div className="grid grid-cols-2 border-t border-slate-200 bg-amber-50/50 px-4 py-3 text-sm">
+                <p className="font-semibold text-slate-900">
+                  Total (Mandatory HMO + Planning)
+                </p>
+                <p className="font-semibold text-slate-900">GBP 1,658</p>
+              </div>
+            </div>
+
+            <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-amber-200 bg-amber-50/40 px-4 py-3">
+              <div>
+                <p className="text-base font-semibold text-slate-900">
+                  Council submission total
+                </p>
+                <p className="text-sm text-slate-600">
+                  The core council submission fee is still due and
+                  pending payment.
+                </p>
+              </div>
+              <p className="text-2xl font-bold text-slate-900">
+                Grand Total: GBP 1,658
+              </p>
+            </div>
+          </div>
+      </div>
+
+      <div className="space-y-4">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-500">
+          Pending Documents
+        </p>
+        {pendingGroups.map((group) => (
+          <div
+            key={group.title}
+            className="rounded-[22px] border border-slate-200 bg-slate-50 p-4"
+          >
+            <span className="inline-flex rounded-full border border-slate-300 bg-white px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-700">
+              {group.title}
+            </span>
+            <div className="mt-3 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+              {group.items.map((item) => (
+                <div
+                  key={`${group.title}-${item}`}
+                  className="flex items-center justify-between gap-3 rounded-2xl border border-rose-200 bg-rose-50/40 px-3 py-3"
+                >
+                  <p className="text-sm text-rose-900">{item}</p>
+                  <span className="shrink-0 rounded-full bg-rose-100 px-2.5 py-1 text-[11px] font-semibold text-rose-700">
+                    Awaiting
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
 function JourneyRoadmap({
   steps,
   currentStepIndex,
@@ -3339,3 +4016,5 @@ function JourneyRoadmap({
     </div>
   )
 }
+
+

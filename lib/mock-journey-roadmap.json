@@ -14,6 +14,17 @@
       "nextStageId": "documents-briefcase"
     },
     {
+      "id": "responses-fee-pending-documents",
+      "label": "Responses / Fee & Pending Docs",
+      "iconKey": "clipboard-list",
+      "screen": "responses-fee-pending-documents",
+      "status": "locked",
+      "canOpen": false,
+      "title": "Responses, Fee & Pending Documents",
+      "description": "Track client responses, pending documents, and fee-related updates before proceeding.",
+      "nextStageId": "documents-briefcase"
+    },
+    {
       "id": "documents-briefcase",
       "label": "Documents Briefcase",
       "iconKey": "file-search",

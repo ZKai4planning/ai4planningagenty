@@ -2,6 +2,7 @@ import roadmapResponse from "@/lib/mock-journey-roadmap.json"
 
 export type JourneyStageId =
   | "sop"
+  | "responses-fee-pending-documents"
   | "documents-briefcase"
   | "compliance-briefcase"
   | "drawings-briefcase"
@@ -14,6 +15,7 @@ export type JourneyStageStatus =
 
 export type JourneyStageIconKey =
   | "file-text"
+  | "clipboard-list"
   | "file-search"
   | "file-check"
   | "ruler"
@@ -21,6 +23,7 @@ export type JourneyStageIconKey =
 
 export type JourneyStageScreen =
   | "sop"
+  | "responses-fee-pending-documents"
   | "documents-briefcase"
   | "compliance-briefcase"
   | "drawings-briefcase"
