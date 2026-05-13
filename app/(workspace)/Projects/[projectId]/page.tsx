@@ -3144,7 +3144,7 @@ function SubmitBriefcaseDetails({
               ) : runComplete ? (
                 <div className="space-y-3">
                   <p className="text-sm font-medium text-slate-100">
-                    Can we send to Agent X the data?
+                    Submit the final pack to Agent X?
                   </p>
                   <button
                     type="button"
