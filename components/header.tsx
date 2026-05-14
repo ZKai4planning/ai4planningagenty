@@ -111,10 +111,10 @@ export function DashboardHeader({
   }
 
   return (
-    <header className="flex items-center justify-between whitespace-nowrap bg-gray-100 dark:bg-[#101622]/80 backdrop-blur-md px-10 py-3 z-50 sticky top-0">
+    <header className="sticky top-0 z-50 flex flex-wrap items-center justify-between gap-3 border-b border-slate-200/70 bg-gray-100/95 px-4 py-3 backdrop-blur-md dark:border-slate-800 dark:bg-[#101622]/80 sm:px-6 lg:px-8">
  
       {/* ================= LEFT ================= */}
-      <div className="flex items-center gap-4">
+      <div className="flex min-w-0 items-center gap-2 sm:gap-4">
        
         {/* ✅ Sidebar Toggle (EXTRACTED from Sidebar) */}
         <button
@@ -125,7 +125,7 @@ export function DashboardHeader({
         </button>
  
         {/* Breadcrumbs */}
-        <nav className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
+        <nav className="hidden min-w-0 items-center gap-2 overflow-x-auto whitespace-nowrap text-sm text-slate-500 dark:text-slate-400 sm:flex">
           {breadcrumbs.map((crumb, index) => (
             <div key={index} className="flex items-center gap-2">
               {index !== 0 && <span>/</span>}
@@ -147,15 +147,15 @@ export function DashboardHeader({
       </div>
  
       {/* ================= RIGHT ================= */}
-      <div className="flex items-center gap-4">
-        <div className="hidden sm:flex flex-col items-end">
+      <div className="ml-auto flex items-center gap-2 sm:gap-4">
+        <div className="hidden lg:flex flex-col items-end">
           <p className="text-sm text-slate-700 dark:text-slate-200 font-medium">
             {greeting}, {userLabel}
           </p>
           <p className="text-xs text-slate-500 dark:text-slate-400">{wish}</p>
         </div>
 
-        <div className="hidden md:flex min-w-[180px] flex-col rounded-2xl border border-slate-200 bg-white px-4 py-2 shadow-sm">
+        <div className="hidden min-w-[180px] flex-col rounded-2xl border border-slate-200 bg-white px-4 py-2 shadow-sm xl:flex">
           <div className="flex items-center justify-between gap-3">
             <p className="text-xs font-semibold text-slate-700">
               {hasCompletionData
@@ -196,7 +196,7 @@ export function DashboardHeader({
           </button>
 
           {menuOpen && (
-            <div className="absolute right-0 top-[calc(100%+0.75rem)] z-50 w-72 rounded-2xl border border-slate-200 bg-white p-2 shadow-xl">
+            <div className="absolute right-0 top-[calc(100%+0.75rem)] z-50 w-[min(18rem,calc(100vw-2rem))] rounded-2xl border border-slate-200 bg-white p-2 shadow-xl">
               <div className="flex items-center gap-3 rounded-xl px-3 py-3">
                 {userAvatarUrl ? (
                   <img

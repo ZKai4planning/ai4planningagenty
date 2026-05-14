@@ -346,7 +346,7 @@ export default function DashboardLayout({
 
   return (
     // 🔒 Root: no horizontal scroll ever
-    <div className="h-screen w-full overflow-x-hidden overflow-y-hidden flex bg-gray-100 relative">
+    <div className="relative flex h-[100svh] w-full overflow-x-hidden overflow-y-hidden bg-gray-100">
 
       {/* Sidebar */}
       <Sidebar
@@ -382,7 +382,7 @@ export default function DashboardLayout({
         />
 
         {/* Main scroll area */}
-        <main className="flex-1 min-w-0 w-full max-w-full overflow-y-auto overflow-x-hidden p-4 sm:p-6 lg:p-8">
+        <main className="flex-1 min-w-0 w-full max-w-full overflow-y-auto overflow-x-hidden p-4 sm:p-5 lg:p-6">
           {children}
         </main>
 
@@ -397,8 +397,8 @@ export default function DashboardLayout({
             className="fixed inset-0 bg-black/60 z-40"
             onClick={() => setShowGetStarted(false)}
           />
-          <div className="fixed inset-0 z-50 flex items-center justify-center">
-            <div className="relative">
+          <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
+            <div className="relative w-full max-w-5xl">
               <button
                 onClick={() => setShowGetStarted(false)}
                 className="absolute -top-3 -right-3 bg-black text-white p-2 rounded-full"

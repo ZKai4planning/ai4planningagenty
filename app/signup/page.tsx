@@ -7,17 +7,17 @@ import { LoginFooter } from "@/components/login-footer"
 
 export default function SignupPage() {
   return (
-    <div className="relative flex min-h-screen  flex-col blueprint-grid selection:bg-primary selection:text-white">
+    <div className="relative flex min-h-[100svh] flex-col overflow-x-hidden blueprint-grid selection:bg-primary selection:text-white">
       {/* Navigation Header */}
       <LoginHeader />
 
       {/* Main Content */}
-      <main className="relative flex flex-1 items-center justify-center p-6">
+      <main className="relative flex flex-1 items-center justify-center px-4 py-20 sm:px-6 sm:py-24 lg:px-8 lg:py-28">
         {/* Blueprint Background Elements */}
         <BlueprintBackground />
 
         {/* Signup Container */}
-        <div className="relative z-10 w-full max-w-[1100px] grid grid-cols-1 lg:grid-cols-12 gap-0 bg-white dark:bg-slate-900 shadow-2xl rounded-xl overflow-hidden border border-slate-200 dark:border-slate-800">
+        <div className="relative z-10 grid w-full max-w-[1100px] grid-cols-1 gap-0 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-2xl dark:border-slate-800 dark:bg-slate-900 lg:grid-cols-12">
           {/* Left Section */}
           <SignupLeftSection />
 

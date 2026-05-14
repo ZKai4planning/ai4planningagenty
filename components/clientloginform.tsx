@@ -506,16 +506,16 @@ const handleResendOtp = async () => {
 
 
   return (
-    <div className="lg:col-span-5 p-8 lg:p-12 flex flex-col justify-center">
+    <div className="flex flex-col justify-center p-6 sm:p-8 lg:col-span-5 lg:p-10 xl:p-12">
       {/* Header */}
-      <div className="mb-8">
+      <div className="mb-5 sm:mb-6">
         <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
          Sign In  
         </h2>
       </div>
 
 
-      <form className="space-y-6" onSubmit={handleSubmit}>
+      <form className="space-y-4 sm:space-y-5" onSubmit={handleSubmit}>
         <div className="group">
           <label className="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-2 block">
             Email
@@ -624,7 +624,7 @@ const handleResendOtp = async () => {
                         .slice(0, 6);
                       if (pasted.length === 6) setOtp(pasted.split(""));
                     }}
-                    className="w-10 h-10 text-center text-lg font-semibold
+                    className="h-10 w-10 text-center text-lg font-semibold
                       bg-slate-50 dark:bg-slate-800/50
                       border border-slate-200 dark:border-slate-700
                       rounded-lg text-slate-900 dark:text-white
@@ -676,7 +676,7 @@ const handleResendOtp = async () => {
 
         <button
           type="submit"
-          className="w-full bg-primary text-white font-bold py-3 rounded
+          className="w-full rounded bg-primary py-3 text-white font-bold
             transition-all duration-300 active:scale-95"
         >
           {step === "SUBMIT" ? "Submit" : "Verify & Sign In"}

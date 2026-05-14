@@ -115,11 +115,17 @@ export default function DataTable<T extends { id: string | number; isActive?: bo
       : <ArrowDown className="inline ml-1 w-4 h-4" />
   }
 
+  const getAlignClass = (align?: Column<T>["align"]) => {
+    if (align === "center") return "text-center"
+    if (align === "right") return "text-right"
+    return "text-left"
+  }
+
   return (
-    <div className="bg-white rounded-xl shadow p-6">
+    <div className="rounded-xl bg-white p-4 shadow sm:p-6">
 
       {/* TOP BAR */}
-      <div className="flex justify-between items-center mb-4">
+      <div className="mb-4 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
         <input
           placeholder="Search..."
           value={search}
@@ -127,17 +133,17 @@ export default function DataTable<T extends { id: string | number; isActive?: bo
             setSearch(e.target.value)
             setCurrentPage(1)
           }}
-          className="border px-4 py-2 rounded-lg w-64 text-sm"
+          className="w-full rounded-lg border px-4 py-2 text-sm lg:max-w-xs"
         />
 
-        <div className="flex gap-3">
+        <div className="flex flex-col gap-3 sm:flex-row">
           <select
             value={statusFilter}
             onChange={(e) => {
               setStatusFilter(e.target.value as any)
               setCurrentPage(1)
             }}
-            className="border px-4 py-2 rounded-lg text-sm"
+            className="rounded-lg border px-4 py-2 text-sm"
           >
             <option value="All">All</option>
             <option value="Active">Active</option>
@@ -146,7 +152,7 @@ export default function DataTable<T extends { id: string | number; isActive?: bo
 
           <button
             onClick={handleExport}
-            className="flex items-center gap-2 border px-4 py-2 rounded-lg text-sm"
+            className="flex items-center justify-center gap-2 rounded-lg border px-4 py-2 text-sm"
           >
             <Download className="w-4 h-4" />
             Export
@@ -155,8 +161,8 @@ export default function DataTable<T extends { id: string | number; isActive?: bo
       </div>
 
       {/* TABLE */}
-      <div className="overflow-auto border rounded-lg">
-        <table className="min-w-full table-fixed">
+      <div className="overflow-x-auto rounded-lg border">
+        <table className="min-w-[720px] w-full table-fixed">
           <thead className="bg-gray-100 sticky top-0">
             <tr>
          {columns.map(col => (
@@ -176,7 +182,7 @@ export default function DataTable<T extends { id: string | number; isActive?: bo
     className={`px-4 py-3 text-sm font-semibold whitespace-nowrap
       ${col.sortable ? "cursor-pointer" : ""}
       ${col.sticky ? "sticky top-0 bg-gray-100 z-30" : ""}
-      text-${col.align ?? "left"}
+      ${getAlignClass(col.align)}
     `}
   >
     {col.label}
@@ -231,7 +237,7 @@ export default function DataTable<T extends { id: string | number; isActive?: bo
       </div>
 
       {/* FOOTER */}
-      <div className="flex justify-between items-center mt-4 text-sm">
+      <div className="mt-4 flex flex-col gap-3 text-sm sm:flex-row sm:items-center sm:justify-between">
         <div>
           Rows per page:
           <select
@@ -248,7 +254,7 @@ export default function DataTable<T extends { id: string | number; isActive?: bo
           </select>
         </div>
 
-        <div className="flex gap-2">
+        <div className="flex gap-2 self-start sm:self-auto">
           <button
             disabled={currentPage === 1}
             onClick={() => setCurrentPage(p => p - 1)}

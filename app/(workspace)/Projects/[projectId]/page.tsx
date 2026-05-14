@@ -1466,7 +1466,7 @@ export default function ProjectDetailsPage() {
   }
 
   return (
-    <main className="min-h-screen bg-slate-50 px-5 py-8">
+    <main className="min-h-full bg-slate-50 px-3 py-5 sm:px-4 sm:py-6 lg:px-5 lg:py-8">
       <div className="flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">
@@ -1487,7 +1487,7 @@ export default function ProjectDetailsPage() {
       </div>
 
       <div className="mt-8">
-        <div className="grid grid-cols-12 gap-6">
+        <div className="grid grid-cols-12 gap-4 lg:gap-6">
           <div className="col-span-12">
             <div className="rounded-2xl border bg-white p-6 shadow-sm">
               <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
@@ -2199,7 +2199,7 @@ function EligibilityCheckDetails({
               <Building2 className="w-4 h-4 text-blue-600" />
               Property Overview
             </h3>
-            <div className="grid grid-cols-2 gap-4 rounded-lg bg-slate-50 p-4">
+            <div className="grid gap-4 rounded-lg bg-slate-50 p-4 sm:grid-cols-2">
               <div>
                 <div className="mb-1 text-xs text-slate-500">
                   Property Type
@@ -2264,7 +2264,7 @@ function EligibilityCheckDetails({
               <Ruler className="w-4 h-4 text-purple-600" />
               Dimensions
             </h3>
-            <div className="grid grid-cols-4 gap-4 bg-purple-50 rounded-lg p-4">
+            <div className="grid gap-4 rounded-lg bg-purple-50 p-4 sm:grid-cols-2 xl:grid-cols-4">
               <div>
                 <div className="mb-1 text-xs text-slate-500">Length</div>
                 <div
@@ -2346,7 +2346,7 @@ function EligibilityCheckDetails({
               <FileCheck className="w-4 h-4 text-blue-600" />
               Proposed Materials
             </h3>
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid gap-2 sm:grid-cols-2">
               {displayedMaterials.length > 0 ? (
                 displayedMaterials.map((material, idx) => {
                   const missing = isMissingAnswer(material)
@@ -3897,12 +3897,12 @@ Planning Sensitivity:
             </div>
 
             <div className="mt-4 overflow-hidden rounded-2xl border border-slate-200">
-              <div className="grid grid-cols-2 bg-slate-100 px-4 py-3 text-xs font-semibold uppercase tracking-[0.14em] text-slate-600">
+              <div className="grid grid-cols-2 gap-3 bg-slate-100 px-4 py-3 text-xs font-semibold uppercase tracking-[0.14em] text-slate-600">
                 <p>Category</p>
                 <p>Fee</p>
               </div>
 
-              <div className="grid grid-cols-2 border-t border-slate-200 bg-white px-4 py-3 text-sm">
+              <div className="grid grid-cols-2 gap-3 border-t border-slate-200 bg-white px-4 py-3 text-sm">
                 <p className="font-semibold text-slate-900">
                   Mandatory HMO Licence
                 </p>
@@ -3911,14 +3911,14 @@ Planning Sensitivity:
                 </p>
               </div>
 
-              <div className="grid grid-cols-2 border-t border-slate-200 bg-white px-4 py-3 text-sm">
+              <div className="grid grid-cols-2 gap-3 border-t border-slate-200 bg-white px-4 py-3 text-sm">
                 <p className="font-semibold text-slate-900">
                   Planning Permission (Change of Use)
                 </p>
                 <p className="font-semibold text-slate-900">GBP 258</p>
               </div>
 
-              <div className="grid grid-cols-2 border-t border-slate-200 bg-amber-50/50 px-4 py-3 text-sm">
+              <div className="grid grid-cols-2 gap-3 border-t border-slate-200 bg-amber-50/50 px-4 py-3 text-sm">
                 <p className="font-semibold text-slate-900">
                   Total (Mandatory HMO + Planning)
                 </p>

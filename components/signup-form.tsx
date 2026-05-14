@@ -14,9 +14,9 @@ export function SignupForm() {
   }
 
   return (
-    <div className="lg:col-span-5 p-8 lg:p-14 bg-white dark:bg-slate-900 flex flex-col justify-center">
+    <div className="flex flex-col justify-center bg-white p-6 dark:bg-slate-900 sm:p-8 lg:col-span-5 lg:p-10 xl:p-14">
       <div className="max-w-md mx-auto w-full">
-        <div className="mb-10 text-center lg:text-left">
+        <div className="mb-8 text-center lg:text-left">
           <h2 className="text-2xl font-bold text-slate-900 dark:text-white">New Designer Registration</h2>
           <p className="text-sm text-slate-500 dark:text-slate-400 mt-2">
             Enter your architectural metadata to proceed.
@@ -24,7 +24,7 @@ export function SignupForm() {
         </div>
 
         {/* Google Sign Up */}
-        <div className="mb-8">
+        <div className="mb-6">
           <button
   className="w-full bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-700 py-3 rounded-lg text-sm font-medium transition-all flex items-center justify-center gap-3 text-slate-700 dark:text-slate-200 shadow-sm hover:shadow"
   type="button"
@@ -57,7 +57,7 @@ export function SignupForm() {
         </div>
 
         {/* Divider */}
-        <div className="relative flex items-center gap-4 mb-8">
+        <div className="relative mb-6 flex items-center gap-4">
           <div className="h-px bg-slate-100 dark:bg-slate-800 flex-1"></div>
           <span className="text-[10px] font-bold text-slate-300 uppercase tracking-[0.2em]">Manual_Entry</span>
           <div className="h-px bg-slate-100 dark:bg-slate-800 flex-1"></div>

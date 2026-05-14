@@ -184,13 +184,13 @@ export default function LogsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-100 p-6">
+    <div className="space-y-6">
       {/* ================= FILTER BAR ================= */}
-      <div className="bg-white rounded-xl shadow-sm p-4 flex items-center justify-between mb-8">
-        <div className="flex gap-4 items-center">
+      <div className="mb-8 flex flex-col gap-4 rounded-xl bg-white p-4 shadow-sm lg:flex-row lg:items-center lg:justify-between">
+        <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
           <select
             onChange={(e) => setSelectedAgent(e.target.value)}
-            className="border rounded-lg px-3 py-2 text-sm"
+            className="rounded-lg border px-3 py-2 text-sm"
           >
             <option value="All">All Agents</option>
             <option>Agent Y</option>
@@ -199,7 +199,7 @@ export default function LogsPage() {
 
           <select
             onChange={(e) => setSelectedStatus(e.target.value)}
-            className="border rounded-lg px-3 py-2 text-sm"
+            className="rounded-lg border px-3 py-2 text-sm"
           >
             <option value="All">All Status</option>
             <option value="completed">completed</option>
@@ -221,7 +221,7 @@ export default function LogsPage() {
 
         <button
           onClick={exportLogs}
-          className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm flex items-center gap-2 hover:bg-blue-700 transition"
+          className="flex items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm text-white transition hover:bg-blue-700 sm:self-start lg:self-auto"
         >
           <Download size={16} />
           Export Logs
@@ -229,8 +229,8 @@ export default function LogsPage() {
       </div>
 
       {/* ================= TIMELINE ================= */}
-      <div className="relative">
-        <div className="absolute left-6 top-0 bottom-0 w-[2px] bg-gray-300" />
+      <div className="relative pl-3 sm:pl-0">
+        <div className="absolute bottom-0 left-5 top-0 hidden w-[2px] bg-gray-300 sm:block" />
 
         <div className="space-y-10">
           {filteredData.map((item) => (
@@ -264,10 +264,10 @@ function TimelineItem({ item }: { item: ActivityItem }) {
   }
 
   return (
-    <div className="relative flex gap-6">
+    <div className="relative flex gap-3 sm:gap-6">
       {/* ICON */}
       <div
-        className={`relative z-10 flex items-center justify-center w-10 h-10 rounded-full text-white ${
+        className={`relative z-10 flex h-9 w-9 items-center justify-center rounded-full text-white sm:h-10 sm:w-10 ${
           colorMap[item.type]
         }`}
       >
@@ -276,7 +276,7 @@ function TimelineItem({ item }: { item: ActivityItem }) {
 
       {/* CONTENT */}
       <div className="flex-1">
-        <div className="flex items-center gap-4 mb-3">
+        <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
           <span className="text-xs text-gray-500">
             {item.timestamp.toLocaleDateString("en-GB")} ·{" "}
             {item.timestamp.toLocaleTimeString([], {
@@ -290,7 +290,7 @@ function TimelineItem({ item }: { item: ActivityItem }) {
           </span>
 
           <span
-            className={`ml-auto text-xs px-3 py-1 rounded-full ${
+            className={`text-xs px-3 py-1 rounded-full sm:ml-auto ${
               badgeMap[item.type]
             }`}
           >

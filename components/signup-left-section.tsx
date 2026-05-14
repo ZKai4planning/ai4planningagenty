@@ -1,6 +1,6 @@
 export function SignupLeftSection() {
   return (
-    <div className="lg:col-span-7 relative bg-slate-50 dark:bg-slate-950/50 p-10 flex flex-col justify-between overflow-hidden border-r border-slate-200 dark:border-slate-800">
+    <div className="relative hidden overflow-hidden border-r border-slate-200 bg-slate-50 p-8 dark:border-slate-800 dark:bg-slate-950/50 lg:col-span-7 lg:flex lg:flex-col lg:justify-between lg:p-10">
       {/* Graph Paper Texture */}
       <div className="absolute inset-0 opacity-10 bg-[url('https://www.transparenttextures.com/patterns/graph-paper.png')]"></div>
 

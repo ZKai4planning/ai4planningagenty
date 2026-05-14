@@ -218,7 +218,7 @@ export default function DashboardLayout({
 
   return (
     // 🔒 Root: no horizontal scroll ever
-    <div className="h-screen w-full overflow-x-hidden overflow-y-hidden flex bg-gray-100 relative">
+    <div className="relative flex h-[100svh] w-full overflow-x-hidden overflow-y-hidden bg-gray-100">
 
       {/* Sidebar */}
       <Sidebar
@@ -240,23 +240,23 @@ export default function DashboardLayout({
       {/* Content wrapper */}
       <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
         <div className="border-b border-slate-200 bg-white">
-          <div className="flex flex-wrap items-center justify-between gap-4 px-5 py-4">
-            <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center justify-between gap-4 px-4 py-4 sm:px-5 lg:px-6">
+            <div className="flex min-w-0 items-center gap-3">
               <div className="flex h-9 w-9 items-center justify-center rounded-full bg-blue-600 text-white text-sm font-semibold">
                 AY
               </div>
-              <div>
-                <p className="text-sm font-semibold text-slate-900">
+              <div className="min-w-0">
+                <p className="truncate text-sm font-semibold text-slate-900">
                   Agent Y Project Workflow
                 </p>
-                <p className="text-xs text-slate-500">
+                <p className="truncate text-xs text-slate-500">
                   Active workspace context
                 </p>
               </div>
             </div>
 
             <div className="flex flex-wrap items-center gap-3">
-              <div className="flex items-center gap-4 rounded-full border border-slate-200 bg-slate-50 px-4 py-2 text-xs font-semibold text-slate-600">
+              <div className="hidden items-center gap-4 rounded-full border border-slate-200 bg-slate-50 px-4 py-2 text-xs font-semibold text-slate-600 md:flex">
                 <div className="flex flex-col items-center">
                   <span className="text-[10px] uppercase text-slate-400">
                     Overall
@@ -292,7 +292,7 @@ export default function DashboardLayout({
                   )}
                 </button>
                 {showNotifications && (
-                  <div className="absolute right-0 top-12 z-30 w-72 rounded-2xl border border-slate-200 bg-white p-4 shadow-lg">
+                  <div className="absolute right-0 top-12 z-30 w-[min(18rem,calc(100vw-2rem))] rounded-2xl border border-slate-200 bg-white p-4 shadow-lg">
                     <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">
                       Notifications
                     </p>
@@ -342,7 +342,7 @@ export default function DashboardLayout({
         </div>
 
         {/* Main scroll area */}
-        <main className="flex-1 min-w-0 w-full max-w-full overflow-y-auto overflow-x-hidden p-4 sm:p-6 lg:p-8">
+        <main className="flex-1 min-w-0 w-full max-w-full overflow-y-auto overflow-x-hidden p-4 sm:p-5 lg:p-6">
           {children}
         </main>
 
@@ -357,8 +357,8 @@ export default function DashboardLayout({
             className="fixed inset-0 bg-black/60 z-40"
             onClick={() => setShowGetStarted(false)}
           />
-          <div className="fixed inset-0 z-50 flex items-center justify-center">
-            <div className="relative">
+          <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
+            <div className="relative w-full max-w-5xl">
               <button
                 onClick={() => setShowGetStarted(false)}
                 className="absolute -top-3 -right-3 bg-black text-white p-2 rounded-full"

@@ -109,7 +109,7 @@ export default function UsersPage() {
 
   return (
     <div className="space-y-8">
-      <section className="rounded-3xl border border-slate-200 bg-white p-8 shadow-sm">
+      <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6 lg:p-8">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">

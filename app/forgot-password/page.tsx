@@ -12,10 +12,10 @@ export const metadata = {
 
 export default function ForgotPasswordPage() {
   return (
-    <div className="relative flex min-h-screen flex-col blueprint-grid selection:bg-primary selection:text-white">
+    <div className="relative flex min-h-[100svh] flex-col overflow-x-hidden blueprint-grid selection:bg-primary selection:text-white">
       <LoginHeader />
 
-      <main className="relative flex flex-1 items-center justify-center p-6">
+      <main className="relative flex flex-1 items-center justify-center px-4 py-20 sm:px-6 sm:py-24 lg:px-8 lg:py-28">
         <BlueprintBackground />
         <ForgotPasswordForm />
         <FloatingToolbarPassword />

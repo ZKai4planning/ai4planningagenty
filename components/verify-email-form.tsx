@@ -8,10 +8,10 @@ export function VerifyEmailForm() {
   }
 
   return (
-    <div className="relative z-10 w-full max-w-[540px] bg-white dark:bg-slate-900 shadow-2xl rounded-xl border border-slate-200 dark:border-slate-800 technical-border">
-      <div className="p-8 lg:p-12 text-center">
+    <div className="technical-border relative z-10 w-full max-w-[540px] rounded-xl border border-slate-200 bg-white shadow-2xl dark:border-slate-800 dark:bg-slate-900">
+      <div className="p-6 text-center sm:p-8 lg:p-12">
         {/* Icon Section */}
-        <div className="relative w-32 h-32 mx-auto mb-8 flex items-center justify-center">
+        <div className="relative mx-auto mb-6 flex h-24 w-24 items-center justify-center sm:mb-8 sm:h-32 sm:w-32">
           <svg
             className="absolute inset-0 w-full h-full text-primary/10"
             fill="none"
@@ -22,9 +22,9 @@ export function VerifyEmailForm() {
             <path d="M25 40L50 15L75 40" strokeWidth="1"></path>
             <path d="M10 90H90" strokeDasharray="2 2" strokeWidth="0.5"></path>
           </svg>
-          <div className="relative z-10 bg-primary/5 rounded-full p-6 border border-primary/20">
+          <div className="relative z-10 rounded-full border border-primary/20 bg-primary/5 p-4 sm:p-6">
             <div className="relative">
-              <span className="material-symbols-outlined text-5xl text-primary">domain_verification</span>
+              <span className="material-symbols-outlined text-4xl text-primary sm:text-5xl">domain_verification</span>
               <div className="absolute -top-1 -right-1 bg-white dark:bg-slate-900 rounded-full">
                 <span className="material-symbols-outlined text-xl text-primary font-bold">check_circle</span>
               </div>
@@ -33,11 +33,11 @@ export function VerifyEmailForm() {
         </div>
 
         {/* Content */}
-        <div className="space-y-4 mb-10">
+        <div className="mb-8 space-y-4 sm:mb-10">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-[10px] font-bold uppercase tracking-wider">
             Action Required: Verify Connection
           </div>
-          <h1 className="text-3xl font-bold text-slate-900 dark:text-white tracking-tight">Check your connection</h1>
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white sm:text-3xl">Check your connection</h1>
           <p className="text-slate-500 dark:text-slate-400 text-sm leading-relaxed max-w-xs mx-auto">
             We've sent a structural handshake link to{" "}
             <span className="text-primary font-semibold">architect@ai4planning.com</span>. Please verify to finalize your
@@ -68,7 +68,7 @@ export function VerifyEmailForm() {
       </div>
 
       {/* Footer */}
-      <div className="bg-slate-50 dark:bg-slate-800/50 px-8 py-3 flex justify-between items-center rounded-b-xl border-t border-slate-100 dark:border-slate-800">
+      <div className="flex flex-wrap items-center justify-between gap-3 rounded-b-xl border-t border-slate-100 bg-slate-50 px-6 py-3 dark:border-slate-800 dark:bg-slate-800/50 sm:px-8">
         <span className="text-[9px] font-mono text-slate-400 uppercase">Packet_ID: #8821-X</span>
         <div className="flex gap-2">
           <div className="w-2 h-2 rounded-full bg-green-500"></div>

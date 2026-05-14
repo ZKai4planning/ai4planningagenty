@@ -217,8 +217,9 @@ export default function WorkspaceCalendarPage() {
         </div>
       </div>
 
-      <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-        <div className="grid grid-cols-7 text-[11px] font-semibold text-slate-400">
+      <div className="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm sm:p-4">
+        <div className="overflow-x-auto">
+        <div className="grid min-w-[700px] grid-cols-7 text-[11px] font-semibold text-slate-400">
           {["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"].map(
             (day) => (
               <div key={day} className="p-2">
@@ -228,8 +229,9 @@ export default function WorkspaceCalendarPage() {
           )}
         </div>
 
-        <div className="grid grid-cols-7 border border-slate-100">
+        <div className="grid min-w-[700px] grid-cols-7 border border-slate-100">
           {calendarCells()}
+        </div>
         </div>
       </div>
     </div>

@@ -148,7 +148,7 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-8">
-      <section className="rounded-3xl border border-slate-200 bg-white p-8 shadow-sm">
+      <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6 lg:p-8">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">
@@ -355,9 +355,9 @@ export default function DashboardPage() {
             recentProjects.map((project) => (
               <div
                 key={project.id}
-                className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3"
+                className="flex flex-col gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 sm:flex-row sm:items-center sm:justify-between"
               >
-                <div>
+                <div className="min-w-0">
                   <p className="text-sm font-semibold text-slate-900">
                     {project.id}
                   </p>
@@ -365,7 +365,7 @@ export default function DashboardPage() {
                     {project.serviceName}
                   </p>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex flex-wrap items-center gap-2">
                   <span className="text-xs text-slate-400">
                     {project.createdAt || "Not set"}
                   </span>
@@ -400,8 +400,8 @@ export default function DashboardPage() {
                 key={activity.id}
                 className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3"
               >
-                <div className="flex items-center justify-between">
-                  <div>
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="min-w-0">
                     <p className="text-sm font-semibold text-slate-900">
                       {activity.type}
                     </p>
@@ -409,7 +409,7 @@ export default function DashboardPage() {
                       {activity.projectId} � {activity.serviceName}
                     </p>
                   </div>
-                  <span className="text-xs text-slate-400">
+                  <span className="text-xs text-slate-400 sm:text-right">
                     {activity.createdAt || ""}
                   </span>
                 </div>

@@ -358,7 +358,7 @@ export default function ProjectsPage() {
           </div>
         )}
 
-        <div className="p-6">
+        <div className="p-4 sm:p-6">
           {loading && projects.length === 0 ? (
             <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-8 text-center text-sm text-slate-500">
               Loading projects...

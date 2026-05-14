@@ -17,8 +17,8 @@ export function LoginHeader() {
   }, [])
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-60 w-full bg-[#050B18]/80 backdrop-blur-md border-b border-white/10">
-      <div className="flex items-center justify-between px-10 py-4">
+    <header className="fixed top-0 left-0 right-0 z-60 w-full border-b border-white/10 bg-[#050B18]/80 backdrop-blur-md">
+      <div className="flex items-center justify-between px-4 py-3 sm:px-6 lg:px-10">
         
         {/* Brand */}
         <a href="/" className="flex items-center gap-3">
@@ -30,7 +30,7 @@ export function LoginHeader() {
             }`}
           >
             <Logo />
-            <h2 className="text-white text-lg font-bold whitespace-nowrap">
+            <h2 className="whitespace-nowrap text-base font-bold text-white sm:text-lg">
               Ai4Planning
             </h2>
           </div>
@@ -39,7 +39,7 @@ export function LoginHeader() {
         {/* Right */}
         <a
           href="/"
-          className="text-[10px] text-white font-bold text-primary uppercase tracking-widest"
+          className="text-[10px] font-bold uppercase tracking-widest text-white"
         >
           Login
         </a>

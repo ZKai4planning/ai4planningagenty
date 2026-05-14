@@ -70,20 +70,20 @@ export default function Sidebar({
         "bg-white text-slate-700 flex flex-col border-r border-slate-200",
         "transition-all duration-300 ease-in-out",
         isOverlay
-          ? "fixed top-0 left-0 z-40 h-full"
+          ? "fixed top-0 left-0 z-40 h-full max-w-[85vw]"
           : "relative h-full",
         collapsed
           ? isOverlay
-            ? "-translate-x-full w-64"
+            ? "-translate-x-full w-72"
             : "w-20"
-          : "translate-x-0 w-64"
+          : "translate-x-0 w-72 sm:w-64"
       )}
     >
       <div className="flex items-center justify-between px-4 h-16 border-b border-slate-200">
         <Logo collapsed={collapsed && !isOverlay} />
       </div>
 
-      <nav className="px-0 py-3 space-y-1 overflow-y-auto">
+      <nav className="space-y-1 overflow-y-auto px-0 py-3">
         {menuItems.map((item) => {
           const Icon = item.icon
           const isOpen = openGroup === item.id

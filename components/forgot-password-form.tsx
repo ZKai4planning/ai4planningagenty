@@ -59,9 +59,9 @@ export function ForgotPasswordForm() {
 
   return (
     <div className="relative z-10 w-full max-w-md">
-      <div className="technical-border bg-white dark:bg-slate-900 p-8 lg:p-10 shadow-2xl border border-slate-200 dark:border-slate-800">
+      <div className="technical-border border border-slate-200 bg-white p-6 shadow-2xl dark:border-slate-800 dark:bg-slate-900 sm:p-8 lg:p-10">
         {/* Header */}
-        <div className="mb-8 text-center">
+        <div className="mb-6 text-center sm:mb-8">
           <div className="inline-flex items-center justify-center size-12 rounded-full bg-primary/5 text-primary mb-4">
             <span className="material-symbols-outlined text-3xl">location_searching</span>
           </div>
@@ -72,7 +72,7 @@ export function ForgotPasswordForm() {
         </div>
 
         {/* Form */}
-        <form className="space-y-8" onSubmit={handleSubmit}>
+        <form className="space-y-6 sm:space-y-8" onSubmit={handleSubmit}>
           <div className="group">
             <div className="flex justify-between items-end mb-2">
               <label className="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em]">
